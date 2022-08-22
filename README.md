@@ -17,7 +17,24 @@
     pip install nonebot_plugin_groupmate_waifu
 ## 使用
     nonebot.load_plugin('nonebot_plugin_groupmate_waifu')
+## 功能介绍
 
+__指令__：`娶群友`
+
+纯爱 __双向奔赴版__，每天刷新一次，两个人会互相抽到对方。
+
+__指令__：`群友卡池`
+
+查看当前群可以娶到的群友列表
+
+__指令__：`透群友`
+
+ntr ~~宫吧老哥狂喜~~版，每次抽到的结果都不一样。
+
+__指令__：`涩涩记录`
+
+查看当前群的群友今日被透的次数，被透次数是跨群的，也就是说群友在别的群挨透也会在记录里显示出来~~群友背地里玩的挺花~~。
+    
 ## 其他
 
 获取群友头像的功能使用了 [nonebot-plugin-petpet（Nonebot2 插件，用于制作摸头等头像相关表情包）](https://github.com/noneplugin/nonebot-plugin-petpet) 中的代码
