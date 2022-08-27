@@ -19,8 +19,6 @@ from .utils import *
 
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
-path = os.path.join(os.path.dirname(__file__),"data")
-
 # 娶群友
 
 record_waifu = {}
@@ -68,7 +66,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     elif record_waifu[group_id][user_id] == 1:
         msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
     else:
-        nickname = member['card'] if member['card'] else member['nickname']
+        nickname = member['card'] or member['nickname']
         msg = (
             "さん的群友結婚对象是、\n",
             MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
@@ -94,7 +92,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
             member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
             msg ="Top80：\n——————————————\n"
             for i in range(len(member_list[:80])):
-                nickname = member_list[i]['card'] if member_list[i]['card'] else member_list[i]['nickname']
+                nickname = member_list[i]['card'] or member_list[i]['nickname']
                 msg += f"{nickname}\n"
             else:
                 output = text_to_png(msg[:-1])
@@ -119,7 +117,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     if member["user_id"] == event.user_id:
         msg = "不可以涩涩！"
     else:
-        nickname = member['card'] if member['card'] else member['nickname']
+        nickname = member['card'] or member['nickname']
         global record_yinpa
         record_yinpa.setdefault(member['user_id'],0)
         record_yinpa[member['user_id']] += 1
@@ -140,7 +138,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
     record = []
     for i in range(len(member_list)):
-        nickname = member_list[i]['card'] if member_list[i]['card'] else member_list[i]['nickname']
+        nickname = member_list[i]['card'] or member_list[i]['nickname']
         global record_yinpa
         times = record_yinpa.get(member_list[i]['user_id'],0)
         if times:
@@ -151,7 +149,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     msg_list =[]
     msg ="Top80：\n——————————————\n"
     for i in range(len(member_list[:80])):
-        nickname = member_list[i]['card'] if member_list[i]['card'] else member_list[i]['nickname']
+        nickname = member_list[i]['card'] or member_list[i]['nickname']
         msg += f"{nickname}\n"
     else:
         output = text_to_png(msg[:-1])
