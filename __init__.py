@@ -90,7 +90,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     else:
         if member_list:
             member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-            msg ="Top80：\n——————————————\n"
+            msg ="卡池：\n——————————————\n"
             for i in range(len(member_list[:80])):
                 nickname = member_list[i]['card'] or member_list[i]['nickname']
                 msg += f"{nickname}\n"
@@ -147,7 +147,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
         record.sort(key = lambda x:x[1],reverse = True)
 
     msg_list =[]
-    msg ="Top80：\n——————————————\n"
+    msg ="卡池：\n——————————————\n"
     for i in range(len(member_list[:80])):
         nickname = member_list[i]['card'] or member_list[i]['nickname']
         msg += f"{nickname}\n"
@@ -157,7 +157,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
             {
                 "type": "node",
                 "data": {
-                    "name": "Top80",
+                    "name": "卡池",
                     "uin": event.self_id,
                     "content": MessageSegment.image(output)
                     }
