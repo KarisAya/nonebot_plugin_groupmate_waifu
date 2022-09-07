@@ -51,3 +51,18 @@ def text_to_png(msg):
     output = io.BytesIO()
     Text2Image.from_text(msg,50,spacing = 10).to_image("white",(20,20)).save(output, format="png")
     return output
+
+def get_message_at(data: str) -> list:
+    '''
+    获取at列表
+    :param data: event.json()
+    '''
+    qq_list = []
+    data = json.loads(data)
+    try:
+        for msg in data['message']:
+            if msg['type'] == 'at':
+                qq_list.append(int(msg['data']['qq']))
+        return qq_list
+    except Exception:
+        return []
