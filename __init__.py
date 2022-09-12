@@ -161,8 +161,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
         if member_list:
             member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
             msg ="卡池：\n——————————————\n"
-            for i in range(len(member_list[:80])):
-                nickname = member_list[i]['card'] or member_list[i]['nickname']
+            for member in member_list[:80]:
+                nickname = member['card'] or member['nickname']
                 msg += f"{nickname}\n"
             else:
                 output = text_to_png(msg[:-1])
@@ -189,19 +189,18 @@ async def _(bot:Bot, event: GroupMessageEvent):
             if B not in listA and B != A:
                 listB.append(B)
 
-        msg = "本群CP：\n——————————————\n"
+        msg = ""
         for user_id in listB:
             member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
             niknameA = member['card'] or member['nickname']
             member = await bot.get_group_member_info(group_id = group_id, user_id = user_id)
             niknameB = member['card'] or member['nickname']
             msg += f"♥ {niknameA} | {niknameB}\n"
+        if msg:
+            output = text_to_png("本群CP：\n——————————————\n" + msg[:-1])
+            await cp_list.finish(MessageSegment.image(output))
 
-        output = text_to_png(msg[:-1])
-        await cp_list.finish(MessageSegment.image(output))
-
-    else:
-        await cp_list.finish("本群暂无cp哦~")
+    await cp_list.finish("本群暂无cp哦~")
 
 
 # 透群友
@@ -241,10 +240,10 @@ async def _(bot:Bot, event: GroupMessageEvent):
     member_list = await bot.get_group_member_list(group_id = event.group_id)
     member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
     record = []
-    for i in range(len(member_list)):
-        nickname = member_list[i]['card'] or member_list[i]['nickname']
+    for member in member_list:
+        nickname = member['card'] or member['nickname']
         global record_yinpa
-        times = record_yinpa.get(member_list[i]['user_id'],0)
+        times = record_yinpa.get(member['user_id'],0)
         if times:
             record.append([nickname,times])
     else:
@@ -252,8 +251,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
 
     msg_list =[]
     msg ="卡池：\n——————————————\n"
-    for i in range(len(member_list[:80])):
-        nickname = member_list[i]['card'] or member_list[i]['nickname']
+    for member in member_list[:80]:
+        nickname = member['card'] or member['nickname']
         msg += f"{nickname}\n"
     else:
         output = text_to_png(msg[:-1])
@@ -269,8 +268,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
             )
 
     msg =""
-    for i in range(len(record)):
-        msg += f"{i+1}.【{record[i][0]}】\n        今日被透 {record[i][1]} 次\n"
+    for info in record:
+        msg += f"【{info[0]}】\n今日被透 {info[1]} 次\n"
     else:
         if msg:
             output = text_to_png("涩涩记录：\n——————————————\n" + msg[:-1])
@@ -287,6 +286,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
         else:
             pass
     await bot.send_group_forward_msg(group_id = event.group_id, messages = msg_list)
+    await yinpa_list.finish()
 
 # 重置娶群友记录
 
