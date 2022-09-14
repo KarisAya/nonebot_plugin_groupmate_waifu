@@ -153,7 +153,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                         )
             else:
                 record_waifu[group_id][user_id] = 1
-                await waifu.finish(random.choice(no_waifu), at_sender=True)
+                await waifu.finish("群友已经被娶光了、\n" + random.choice(no_waifu), at_sender=True)
     else:
         if record_waifu[group_id][user_id] == event.user_id:
             await waifu.finish(random.choice(no_waifu), at_sender=True)
