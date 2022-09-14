@@ -62,7 +62,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                         await waifu.send("恭喜你娶到了群友" + MessageSegment.at(at[0]), at_sender=True)
                         await asyncio.sleep(1)
                     else:
-                        record_waifu[group_id].update({user_id: user_id})
+                        record_waifu[group_id][user_id] = user_id
                 else:
                     pass
             else:
@@ -70,13 +70,12 @@ async def _(bot:Bot, event: GroupMessageEvent):
                     member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][at[0]])
                 except:
                     member = None
-
                 if member:
                     if X == 6: # 彩蛋
                         await waifu.send(
                             "人家已经名花有主了~" + 
                             MessageSegment.image(file = await user_img(record_waifu[group_id][at[0]])) +
-                            "ta的CP：" + ( member['card'] or member['nickname'] ) +
+                            "ta的CP：" + ( member['card'] or member['nickname'] ) + '\n'
                             "但是...",
                             at_sender=True
                             )
@@ -87,9 +86,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
                                 at[0]: user_id
                                 }
                             )
-                        await asyncio.sleep(1)
                     else:
-                        await waifu.finish(
+                        await waifu.send(
                             "人家已经名花有主啦！" + 
                             MessageSegment.image(file = await user_img(record_waifu[group_id][at[0]])) +
                             "ta的CP：" + ( member['card'] or member['nickname'] ),
@@ -104,8 +102,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                             }
                         )
                     await waifu.send("恭喜你娶到了群友" + MessageSegment.at(at[0]), at_sender=True)
-                    await asyncio.sleep(1)
-
+                await asyncio.sleep(1)
         elif record_waifu[group_id][user_id] == at[0]:
             await waifu.finish(
                 "这是你的CP！"+ MessageSegment.at(record_waifu[group_id][user_id]) + '\n' +
@@ -113,8 +110,6 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
                 at_sender=True
                 )
-        elif record_waifu[group_id][user_id] == user_id:
-            await waifu.finish(random.choice(no_waifu), at_sender=True)
         else:
             try:
                 member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
@@ -129,7 +124,6 @@ async def _(bot:Bot, event: GroupMessageEvent):
                     )
             else:
                 record_waifu[group_id][user_id] = user_id
-
     if record_waifu[group_id].get(user_id,0) == 0:
         member_list = await bot.get_group_member_list(group_id = event.group_id)
         i = 0
@@ -148,28 +142,40 @@ async def _(bot:Bot, event: GroupMessageEvent):
                         member['user_id']: user_id
                         }
                     )
+                nickname = member['card'] or member['nickname']
+                await waifu.finish(
+                    (
+                        "さん的群友結婚对象是、\n",
+                        MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
+                        f"『{nickname}』です！"
+                        ),
+                        at_sender=True
+                        )
             else:
                 record_waifu[group_id][user_id] = 1
+                await waifu.finish(random.choice(no_waifu), at_sender=True)
     else:
-        try:
-            member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
-        except:
-            member = None
-    if record_waifu[group_id][user_id] == event.user_id:
-        msg = random.choice(no_waifu)
-    elif record_waifu[group_id][user_id] == 1:
-        msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
-    elif member == None:
-        record_waifu[group_id][user_id] = user_id
-        msg = random.choice(no_waifu)
-    else:
-        nickname = member['card'] or member['nickname']
-        msg = (
-            "さん的群友結婚对象是、\n",
-            MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-            f"『{nickname}』です！"
-            )
-    await waifu.finish(msg, at_sender=True)
+        if record_waifu[group_id][user_id] == event.user_id:
+            await waifu.finish(random.choice(no_waifu), at_sender=True)
+        elif record_waifu[group_id][user_id] == 1:
+            await waifu.finish("群友已经被娶光了、\n" + random.choice(no_waifu), at_sender=True)
+        else:
+            try:
+                member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
+            except:
+                member = None
+            if member:
+                nickname = member['card'] or member['nickname']
+                await waifu.finish(
+                    (
+                        "さん的群友結婚对象是、\n",
+                        MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
+                        f"『{nickname}』です！"
+                        ),
+                        at_sender=True
+                        )
+            else:
+                await waifu.finish(random.choice(no_waifu), at_sender=True)
 
 # 查看娶群友卡池
 
@@ -195,7 +201,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 output = text_to_png(msg[:-1])
                 await waifu_list.finish(MessageSegment.image(output))
         else:
-            await waifu_list.finish("卡池为空，群友已经被娶光了...")
+            await waifu_list.finish("群友已经被娶光了。")
 
 # 查看本群CP
 
