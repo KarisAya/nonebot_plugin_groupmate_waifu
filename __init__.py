@@ -110,6 +110,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
                 at_sender=True
                 )
+        elif record_waifu[group_id][user_id] == user_id:
+            pass
         else:
             try:
                 member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
