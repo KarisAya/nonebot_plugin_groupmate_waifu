@@ -48,3 +48,7 @@ __指令__：`涩涩记录`
 ## 其他
 
 获取群友头像的功能使用了 [nonebot-plugin-petpet（Nonebot2 插件，用于制作摸头等头像相关表情包）](https://github.com/noneplugin/nonebot-plugin-petpet) 中的代码
+
+如有建议，bug反馈，以及讨论新玩法，新机制（或者单纯没有明白怎么用）可以来加群哦~
+
+![群号](https://github.com/KarisAya/nonebot_plugin_game_collection/blob/master/%E9%99%84%E4%BB%B6/qrcode_1665028285876.jpg)
