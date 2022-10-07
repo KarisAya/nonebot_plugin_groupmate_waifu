@@ -17,23 +17,30 @@
     pip install nonebot_plugin_groupmate_waifu
 ## 使用
     nonebot.load_plugin('nonebot_plugin_groupmate_waifu')
+## 配置
+    # nonebot_plugin_groupmate_waifu
+    WAIFU_CD_BYE = 3600     # 分手冷却时间，默认1小时。
 ## 功能介绍
 
 __指令__：`娶群友`
 
 纯爱 __双向奔赴版__，每天刷新一次，两个人会互相抽到对方。
 
-__指令__：`娶群友at`
+__指令__：`娶群友@name`
 
 有机会娶到at的人。。。
 
-__指令__：`群友卡池`
+__指令__：`分手`
 
-查看当前群可以娶到的群友列表
+雪花飘飘北风萧萧，天地一片苍茫~
 
 __指令__：`本群cp`
 
 查看当前群内的cp
+
+__指令__：`群友卡池`
+
+查看当前群可以娶到的群友列表
 
 __指令__：`透群友`
 
