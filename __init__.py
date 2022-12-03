@@ -327,8 +327,9 @@ async def _(bot:Bot, event: GroupMessageEvent):
             record_yinpa.setdefault(member['user_id'],0)
             record_yinpa[member['user_id']] += 1
             msg = (
-                f"恭喜你涩到了群友{nickname}\n",
+                f"恭喜你涩到了群友\n",
                 MessageSegment.image(file = await user_img(member["user_id"])),
+                f"『{nickname}』！"
                 )
             await yinpa.finish(msg, at_sender=True)
         elif yinpa_HE < X < yinpa_BE:
