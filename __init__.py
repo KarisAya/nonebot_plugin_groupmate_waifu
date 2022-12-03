@@ -219,7 +219,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     Now = time.time()
     cd = flag[0] - Now
     if cd <= 0:
-        cd_bye[event.group_id][event.user_id][0] = Now + config.waifu_cd_bye
+        cd_bye[event.group_id][event.user_id][0] = Now + waifu_cd_bye
         A = event.user_id
         B = int(record_waifu[event.group_id][event.user_id])
         del record_waifu[event.group_id][A]
