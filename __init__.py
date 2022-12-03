@@ -24,7 +24,16 @@ from .config import Config
 
 # 加载全局配置
 global_config = nonebot.get_driver().config
-config = Config.parse_obj(global_config.dict())
+waifu_config = Config.parse_obj(global_config.dict())
+
+waifu_cd_bye = waifu_config.waifu_cd_bye
+
+HE = waifu_config.waifu_he
+BE = HE + waifu_config.waifu_be
+NTR = waifu_config.waifu_ntr
+
+yinpa_HE = waifu_config.yinpa_he
+yinpa_BE = yinpa_HE + waifu_config.yinpa_be
 
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
@@ -58,20 +67,19 @@ async def _(bot:Bot, event: GroupMessageEvent):
     if at and at[0] != user_id:
         at = at[0]
         if record_waifu[group_id].get(user_id,0) == 0:
-            X = random.randint(1,6)
             if record_waifu[group_id].get(at,0) in (0, at):
-                if X > 3:
-                    if X == 6:
-                        record_waifu[group_id].update(
-                            {
-                                user_id: at,
-                                at: user_id
-                                }
-                            )
-                        await waifu.send("恭喜你娶到了群友" + MessageSegment.at(at), at_sender=True)
-                        await asyncio.sleep(1)
-                    else:
-                        record_waifu[group_id][user_id] = user_id
+                X = random.randint(1,100)
+                if 0< X <= HE:
+                    record_waifu[group_id].update(
+                        {
+                            user_id: at,
+                            at: user_id
+                            }
+                        )
+                    await waifu.send("恭喜你娶到了群友" + MessageSegment.at(at), at_sender=True)
+                    await asyncio.sleep(1)
+                elif HE < X <= BE:
+                    record_waifu[group_id][user_id] = user_id
                 else:
                     pass
             else:
@@ -80,7 +88,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 except:
                     member = None
                 if member:
-                    if X == 6: # 彩蛋
+                    if random.randint(1,100) <= NTR: # 彩蛋
                         await waifu.send(
                             "人家已经名花有主了~" + 
                             MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
@@ -159,9 +167,9 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 else:
                     await waifu.finish(
                         (
-                            "さん的群友結婚对象是、\n",
+                            "的群友結婚对象是、\n",
                             MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                            f"『{nickname}』です！"
+                            f"『{nickname}』！"
                             ),
                             at_sender=True
                             )
@@ -182,9 +190,9 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 nickname = member['card'] or member['nickname']
                 await waifu.finish(
                     (
-                        "さん的群友結婚对象是、\n",
+                        "的群友結婚对象是、\n",
                         MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                        f"『{nickname}』です！"
+                        f"『{nickname}』！"
                         ),
                         at_sender=True
                         )
@@ -196,7 +204,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
 async def FACTOR(bot: Bot, event: GroupMessageEvent) -> bool:
     global record_waifu
     record_waifu.setdefault(event.group_id,{})
-    return record_waifu[event.group_id].get(event.user_id,0) not in (0, 1, event.user_id) and config.waifu_cd_bye != -1
+    return record_waifu[event.group_id].get(event.user_id,0) not in (0, 1, event.user_id) and waifu_cd_bye != -1
 
 global cd_bye
 cd_bye = {}
@@ -309,23 +317,41 @@ yinpa = on_command("透群友", permission=GROUP, priority = 90, block = True)
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
     user_id = event.user_id
+    global record_yinpa
+    at = get_message_at(event.json())
+    if at and at[0] != user_id:
+        X = random.randint(1,100)
+        if 0 < X <= yinpa_HE:
+            member = await bot.get_group_member_info(group_id = group_id, user_id = at[0])
+            nickname = member['card'] or member['nickname']
+            record_yinpa.setdefault(member['user_id'],0)
+            record_yinpa[member['user_id']] += 1
+            msg = (
+                f"恭喜你涩到了群友{nickname}\n",
+                MessageSegment.image(file = await user_img(member["user_id"])),
+                )
+            await yinpa.finish(msg, at_sender=True)
+        elif yinpa_HE < X < yinpa_BE:
+            msg = "不可以涩涩！"
+            await yinpa.finish(msg, at_sender=True)
+
     member_list = await bot.get_group_member_list(group_id = event.group_id)
     member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
     member = random.choice(member_list[:80])
 
     if member["user_id"] == event.user_id:
         msg = "不可以涩涩！"
+        await yinpa.finish(msg, at_sender=True)
     else:
         nickname = member['card'] or member['nickname']
-        global record_yinpa
         record_yinpa.setdefault(member['user_id'],0)
         record_yinpa[member['user_id']] += 1
         msg = (
-            "さんが群友で涩涩するであろうヒロインは、\n",
+            "的涩涩对象是、\n",
             MessageSegment.image(file = await user_img(member["user_id"])),
-            f"『{nickname}』です！"
+            f"『{nickname}』！"
             )
-    await yinpa.finish(msg, at_sender=True)
+        await yinpa.finish(msg, at_sender=True)
 
 # 查看涩涩记录
 
