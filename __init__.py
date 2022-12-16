@@ -57,8 +57,8 @@ else:
         pass
 
 # 判断文件时效
-timestr = time.strftime('%Y-%m-%d ',time.localtime(time.time())) + "00:00:00"
-timeArray = time.strptime(timestr,'%Y-%m-%d %H:%M:%S')
+timestr = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+timeArray = time.strptime(timestr,'%Y-%m-%d')
 Zero_today = time.mktime(timeArray)
 
 scheduler = require("nonebot_plugin_apscheduler").scheduler
