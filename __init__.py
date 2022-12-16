@@ -14,6 +14,8 @@ import random
 import asyncio
 import time
 
+from pathlib import Path
+
 try:
     import ujson as json
 except ModuleNotFoundError:
@@ -28,6 +30,8 @@ waifu_config = Config.parse_obj(global_config.dict())
 
 waifu_cd_bye = waifu_config.waifu_cd_bye
 
+waifu_save = waifu_config.waifu_save
+
 HE = waifu_config.waifu_he
 BE = HE + waifu_config.waifu_be
 NTR = waifu_config.waifu_ntr
@@ -35,11 +39,38 @@ NTR = waifu_config.waifu_ntr
 yinpa_HE = waifu_config.yinpa_he
 yinpa_BE = yinpa_HE + waifu_config.yinpa_be
 
+
+waifu_file = Path() / "data" / "waifu"
+
+if not waifu_file.exists():
+    waifu_file.mkdir()
+
+record_waifu_file = waifu_file / "record_waifu"
+record_yinpa_file = waifu_file / "record_yinpa"
+
+if waifu_save:
+    def save(file, data):
+        with open(file, "w", encoding="utf8") as f:
+            f.write(str(data))
+else:
+    def save(file, data):
+        pass
+
+# 判断文件时效
+timestr = time.strftime('%Y-%m-%d ',time.localtime(time.time())) + "00:00:00"
+timeArray = time.strptime(timestr,'%Y-%m-%d %H:%M:%S')
+Zero_today = time.mktime(timeArray)
+
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
 # 娶群友
 
-record_waifu = {}
+if record_waifu_file.exists() and os.path.getmtime(record_waifu_file) > Zero_today:
+    with open(record_waifu_file,'r') as f:     # 读文件
+        line = f.read()
+        record_waifu = eval(line)
+else:
+    record_waifu = {}
 
 waifu = on_command("娶群友", permission=GROUP, priority = 90, block = True)
 
@@ -61,7 +92,7 @@ happy_end= [
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
     user_id = event.user_id
-    global record_waifu
+    global record_waifu_file, record_waifu
     record_waifu.setdefault(group_id,{})
     at = get_message_at(event.json())
     if at and at[0] != user_id:
@@ -69,7 +100,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
         if record_waifu[group_id].get(user_id,0) == 0:
             if record_waifu[group_id].get(at,0) in (0, at):
                 X = random.randint(1,100)
-                if 0< X <= HE:
+                if 0 < X <= HE:
                     record_waifu[group_id].update(
                         {
                             user_id: at,
@@ -83,34 +114,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 else:
                     pass
             else:
-                try:
-                    member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][at])
-                except:
-                    member = None
-                if member:
-                    if random.randint(1,100) <= NTR: # 彩蛋
-                        await waifu.send(
-                            "人家已经名花有主了~" + 
-                            MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
-                            "ta的CP：" + ( member['card'] or member['nickname'] ) + '\n'
-                            "但是...",
-                            at_sender=True
-                            )
-                        record_waifu[group_id].pop(record_waifu[group_id][at])
-                        record_waifu[group_id].update(
-                            {
-                                user_id: at,
-                                at: user_id
-                                }
-                            )
-                    else:
-                        await waifu.send(
-                            "人家已经名花有主啦！" + 
-                            MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
-                            "ta的CP：" + ( member['card'] or member['nickname'] ),
-                            at_sender=True
-                            )
-                else:
+                if random.randint(1,100) <= NTR: # 彩蛋
                     record_waifu[group_id].pop(record_waifu[group_id][at])
                     record_waifu[group_id].update(
                         {
@@ -118,7 +122,20 @@ async def _(bot:Bot, event: GroupMessageEvent):
                             at: user_id
                             }
                         )
-                    await waifu.send("恭喜你娶到了群友" + MessageSegment.at(at), at_sender=True)
+                    await waifu.send(
+                        "人家已经名花有主了~" + 
+                        MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
+                        "ta的CP：" + ( member['card'] or member['nickname'] ) + '\n'
+                        "但是...",
+                        at_sender=True
+                        )
+                else:
+                    await waifu.send(
+                        "人家已经名花有主啦！" + 
+                        MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
+                        "ta的CP：" + ( member['card'] or member['nickname'] ),
+                        at_sender=True
+                        )
                 await asyncio.sleep(1)
         elif record_waifu[group_id][user_id] == at:
             await waifu.finish(
@@ -163,9 +180,9 @@ async def _(bot:Bot, event: GroupMessageEvent):
                     )
                 nickname = member['card'] or member['nickname']
                 if record_waifu[group_id][user_id] == user_id:
-                    await waifu.finish(random.choice(no_waifu), at_sender=True)
+                    await waifu.send(random.choice(no_waifu), at_sender=True)
                 else:
-                    await waifu.finish(
+                    await waifu.send(
                         (
                             "的群友結婚对象是、\n",
                             MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
@@ -175,7 +192,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                             )
             else:
                 record_waifu[group_id][user_id] = 1
-                await waifu.finish("群友已经被娶光了、\n" + random.choice(no_waifu), at_sender=True)
+                await waifu.send("群友已经被娶光了、\n" + random.choice(no_waifu), at_sender=True)
     else:
         if record_waifu[group_id][user_id] == event.user_id:
             await waifu.finish(random.choice(no_waifu), at_sender=True)
@@ -198,6 +215,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                         )
             else:
                 await waifu.finish(random.choice(no_waifu), at_sender=True)
+    save(record_waifu_file,record_waifu)
 
 # 分手
 
@@ -213,7 +231,7 @@ bye = on_command("离婚", aliases = {"分手"}, permission = FACTOR, priority =
 
 @bye.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
-    global record_waifu, cd_bye
+    global record_waifu_file, record_waifu, cd_bye
     cd_bye.setdefault(event.group_id,{})
     flag = cd_bye[event.group_id].setdefault(event.user_id,[0,0])
     Now = time.time()
@@ -224,6 +242,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
         B = int(record_waifu[event.group_id][event.user_id])
         del record_waifu[event.group_id][A]
         del record_waifu[event.group_id][B]
+        save(record_waifu_file,record_waifu)
         if random.randint(1,2) == 1:
             await bye.finish(random.choice(("嗯。","...","好。")))
         else:
@@ -309,7 +328,12 @@ async def _(bot:Bot, event: GroupMessageEvent):
 
 # 透群友
 
-record_yinpa = {}
+if record_yinpa_file.exists() and os.path.getmtime(record_yinpa_file) > Zero_today:
+    with open(record_waifu_file,'r') as f:     # 读文件
+        line = f.read()
+        record_yinpa = eval(line)
+else:
+    record_yinpa = {}
 
 yinpa = on_command("透群友", permission=GROUP, priority = 90, block = True)
 
@@ -331,7 +355,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 MessageSegment.image(file = await user_img(member["user_id"])),
                 f"『{nickname}』！"
                 )
-            await yinpa.finish(msg, at_sender=True)
+            await yinpa.send(msg, at_sender=True)
         elif yinpa_HE < X < yinpa_BE:
             msg = "不可以涩涩！"
             await yinpa.finish(msg, at_sender=True)
@@ -352,7 +376,9 @@ async def _(bot:Bot, event: GroupMessageEvent):
             MessageSegment.image(file = await user_img(member["user_id"])),
             f"『{nickname}』！"
             )
-        await yinpa.finish(msg, at_sender=True)
+        await yinpa.send(msg, at_sender=True)
+
+    save(record_yinpa_file,record_yinpa)
 
 # 查看涩涩记录
 
