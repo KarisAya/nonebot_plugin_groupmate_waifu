@@ -20,7 +20,7 @@
 ## 配置
     # nonebot_plugin_groupmate_waifu
     waifu_cd_bye = 3600 # 分手冷却时间，默认1小时。
-    waifu_save = False # 是否将cp记录保存为文件（避免重启bot丢失数据）。
+    waifu_save = false # 是否将cp记录保存为文件（避免重启bot丢失数据）。
 	
     waifu_he = 25 # 在指定娶群友时，成功的概率25%
     waifu_be = 25 # 在指定娶群友时，失败的概率25%
