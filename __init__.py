@@ -160,6 +160,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                     )
             else:
                 record_waifu[group_id][user_id] = user_id
+
     if record_waifu[group_id].get(user_id,0) == 0:
         member_list = await bot.get_group_member_list(group_id = event.group_id)
         i = 0
@@ -180,24 +181,21 @@ async def _(bot:Bot, event: GroupMessageEvent):
                     )
                 nickname = member['card'] or member['nickname']
                 if record_waifu[group_id][user_id] == user_id:
-                    await waifu.send(random.choice(no_waifu), at_sender=True)
+                    msg = random.choice(no_waifu)
                 else:
-                    await waifu.send(
-                        (
-                            "的群友結婚对象是、\n",
-                            MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                            f"『{nickname}』！"
-                            ),
-                            at_sender=True
-                            )
+                    msg = (
+                        "的群友結婚对象是、\n",
+                        MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
+                        f"『{nickname}』！"
+                        )
             else:
                 record_waifu[group_id][user_id] = 1
-                await waifu.send("群友已经被娶光了、\n" + random.choice(no_waifu), at_sender=True)
+                msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
     else:
         if record_waifu[group_id][user_id] == event.user_id:
-            await waifu.finish(random.choice(no_waifu), at_sender=True)
+            msg = random.choice(no_waifu)
         elif record_waifu[group_id][user_id] == 1:
-            await waifu.finish("群友已经被娶光了、\n" + random.choice(no_waifu), at_sender=True)
+            msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
         else:
             try:
                 member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
@@ -205,17 +203,16 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 member = None
             if member:
                 nickname = member['card'] or member['nickname']
-                await waifu.finish(
-                    (
-                        "的群友結婚对象是、\n",
-                        MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                        f"『{nickname}』！"
-                        ),
-                        at_sender=True
-                        )
+                msg = (
+                    "的群友結婚对象是、\n",
+                    MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
+                    f"『{nickname}』！"
+                    )
             else:
-                await waifu.finish(random.choice(no_waifu), at_sender=True)
+                msg = random.choice(no_waifu)
+
     save(record_waifu_file,record_waifu)
+    await waifu.finish(msg, at_sender=True)
 
 # 分手
 
@@ -343,6 +340,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
     user_id = event.user_id
     global record_yinpa
     at = get_message_at(event.json())
+    msg = ""
     if at and at[0] != user_id:
         X = random.randint(1,100)
         if 0 < X <= yinpa_HE:
@@ -355,30 +353,26 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 MessageSegment.image(file = await user_img(member["user_id"])),
                 f"『{nickname}』！"
                 )
-            await yinpa.send(msg, at_sender=True)
         elif yinpa_HE < X < yinpa_BE:
             msg = "不可以涩涩！"
-            await yinpa.finish(msg, at_sender=True)
-
-    member_list = await bot.get_group_member_list(group_id = event.group_id)
-    member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-    member = random.choice(member_list[:80])
-
-    if member["user_id"] == event.user_id:
-        msg = "不可以涩涩！"
-        await yinpa.finish(msg, at_sender=True)
-    else:
-        nickname = member['card'] or member['nickname']
-        record_yinpa.setdefault(member['user_id'],0)
-        record_yinpa[member['user_id']] += 1
-        msg = (
-            "的涩涩对象是、\n",
-            MessageSegment.image(file = await user_img(member["user_id"])),
-            f"『{nickname}』！"
-            )
-        await yinpa.send(msg, at_sender=True)
+    if not msg:
+        member_list = await bot.get_group_member_list(group_id = event.group_id)
+        member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
+        member = random.choice(member_list[:80])
+        if member["user_id"] == event.user_id:
+            msg = "不可以涩涩！"
+        else:
+            nickname = member['card'] or member['nickname']
+            record_yinpa.setdefault(member['user_id'],0)
+            record_yinpa[member['user_id']] += 1
+            msg = (
+                "的涩涩对象是、\n",
+                MessageSegment.image(file = await user_img(member["user_id"])),
+                f"『{nickname}』！"
+                )
 
     save(record_yinpa_file,record_yinpa)
+    await yinpa.finish(msg, at_sender=True)
 
 # 查看涩涩记录
 
