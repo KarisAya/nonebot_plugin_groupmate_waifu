@@ -38,6 +38,7 @@ NTR = waifu_config.waifu_ntr
 
 yinpa_HE = waifu_config.yinpa_he
 yinpa_BE = yinpa_HE + waifu_config.yinpa_be
+yinpa_CP = waifu_config.yinpa_cp
 
 
 waifu_file = Path() / "data" / "waifu"
@@ -65,7 +66,7 @@ scheduler = require("nonebot_plugin_apscheduler").scheduler
 
 # 娶群友
 
-if record_waifu_file.exists() and os.path.getmtime(record_waifu_file) > Zero_today:
+if record_waifu_file.exists():
     with open(record_waifu_file,'r') as f:     # 读文件
         line = f.read()
         record_waifu = eval(line)
@@ -333,6 +334,7 @@ else:
     record_yinpa = {}
 
 yinpa = on_command("透群友", permission=GROUP, priority = 90, block = True)
+yinpa_cp_command = on_command("透对象",aliases = {"透CP","透cp"}, permission=GROUP, priority = 90, block = True)
 
 @yinpa.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
@@ -374,6 +376,34 @@ async def _(bot:Bot, event: GroupMessageEvent):
     save(record_yinpa_file,record_yinpa)
     await yinpa.finish(msg, at_sender=True)
 
+@yinpa_cp_command.handle()
+async def _(bot:Bot, event: GroupMessageEvent):
+    group_id = event.group_id
+    user_id = event.user_id
+    global record_yinpa
+    msg = ""
+    X = random.randint(1,100)
+    if 0 < X <= yinpa_CP:
+        try:
+            member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
+        except:
+            member = None
+        if member:
+            nickname = member['card'] or member['nickname']
+            record_yinpa.setdefault(member['user_id'],0)
+            record_yinpa[member['user_id']] += 1
+            msg = (
+                f"恭喜你涩到了对象\n",
+                MessageSegment.image(file = await user_img(member["user_id"])),
+                f"『{nickname}』！"
+            )
+        else:
+            msg = "你还没有CP哦~"
+    elif yinpa_CP < X:
+        msg = "对象拒绝涩涩！"
+
+    save(record_yinpa_file,record_yinpa)
+    await yinpa_cp_command.finish(msg, at_sender=True)
 # 查看涩涩记录
 
 yinpa_list = on_command("涩涩记录",aliases = {"色色记录"}, permission=GROUP, priority = 90, block = True)
@@ -436,5 +466,4 @@ async def _(bot:Bot, event: GroupMessageEvent):
 @scheduler.scheduled_job("cron",hour = 0)
 def _():
     global record_waifu,record_yinpa
-    record_waifu = {}
     record_yinpa = {}
