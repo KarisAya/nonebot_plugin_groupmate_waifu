@@ -8,3 +8,4 @@ class Config(BaseModel, extra=Extra.ignore):
     waifu_ntr :int = 20
     yinpa_he :int = 50
     yinpa_be :int = 0
+    yinpa_cp :int = 65
