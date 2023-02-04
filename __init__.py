@@ -463,7 +463,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
     user_id = event.user_id
-    global record_yinpa
+    global record_yinpa1,record_yinpa2
     msg = ""
     X = random.randint(1,100)
     if 0 < X <= yinpa_CP:
@@ -473,8 +473,10 @@ async def _(bot:Bot, event: GroupMessageEvent):
             member = None
         if member:
             nickname = member['card'] or member['nickname']
-            record_yinpa.setdefault(member['user_id'],0)
-            record_yinpa[member['user_id']] += 1
+            record_yinpa1.setdefault(user_id,0)
+            record_yinpa1[user_id] += 1
+            record_yinpa2.setdefault(member['user_id'],0)
+            record_yinpa2[member['user_id']] += 1
             msg = (
                 f"恭喜你涩到了对象\n",
                 MessageSegment.image(file = await user_img(member["user_id"])),
