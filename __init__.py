@@ -485,7 +485,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
     elif yinpa_CP < X:
         msg = "对象拒绝涩涩！"
 
-    save(record_yinpa_file,record_yinpa)
+    save(record_yinpa1_file,record_yinpa1)
+    save(record_yinpa2_file,record_yinpa2)
     await yinpa_cp_command.finish(msg, at_sender=True)
 # 查看涩涩记录
 
