@@ -32,6 +32,8 @@ waifu_cd_bye = waifu_config.waifu_cd_bye
 
 waifu_save = waifu_config.waifu_save
 
+waifu_reset = waifu_config.waifu_reset
+
 HE = waifu_config.waifu_he
 BE = HE + waifu_config.waifu_be
 NTR = waifu_config.waifu_ntr
@@ -39,15 +41,17 @@ NTR = waifu_config.waifu_ntr
 yinpa_HE = waifu_config.yinpa_he
 yinpa_BE = yinpa_HE + waifu_config.yinpa_be
 yinpa_CP = waifu_config.yinpa_cp
+yinpa_CP = yinpa_HE if yinpa_CP == 0 else yinpa_CP
 
 
 waifu_file = Path() / "data" / "waifu"
 
 if not waifu_file.exists():
-    waifu_file.mkdir()
+    os.makedirs(waifu_file)
 
 record_waifu_file = waifu_file / "record_waifu"
-record_yinpa_file = waifu_file / "record_yinpa"
+record_yinpa1_file = waifu_file / "record_yinpa1"
+record_yinpa2_file = waifu_file / "record_yinpa2"
 
 if waifu_save:
     def save(file, data):
@@ -57,21 +61,77 @@ else:
     def save(file, data):
         pass
 
-# 判断文件时效
-timestr = time.strftime('%Y-%m-%d',time.localtime(time.time()))
-timeArray = time.strptime(timestr,'%Y-%m-%d')
-Zero_today = time.mktime(timeArray)
-
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
-# 娶群友
+if waifu_reset:
 
-if record_waifu_file.exists():
-    with open(record_waifu_file,'r') as f:     # 读文件
-        line = f.read()
-        record_waifu = eval(line)
+    # 判断文件时效
+    timestr = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+    timeArray = time.strptime(timestr,'%Y-%m-%d')
+    Zero_today = time.mktime(timeArray)
+
+    if record_waifu_file.exists() and os.path.getmtime(record_waifu_file) > Zero_today:
+        with open(record_waifu_file,'r') as f:
+            line = f.read()
+            record_waifu = eval(line)
+    else:
+        record_waifu = {}
+
+    if record_yinpa1_file.exists() and os.path.getmtime(record_yinpa1_file) > Zero_today:
+        with open(record_yinpa1_file,'r') as f:
+            line = f.read()
+            record_yinpa1 = eval(line)
+    else:
+        record_yinpa1 = {}
+
+    if record_yinpa2_file.exists() and os.path.getmtime(record_yinpa2_file) > Zero_today:
+        with open(record_yinpa2_file,'r') as f:
+            line = f.read()
+            record_yinpa2 = eval(line)
+    else:
+        record_yinpa2 = {}
+
+    # 重置记录
+
+    @scheduler.scheduled_job("cron",hour = 0)
+    def _():
+        global record_waifu,record_yinpa1,record_yinpa2
+        record_waifu = {}
+        record_yinpa1 = {}
+        record_yinpa2 = {}
 else:
-    record_waifu = {}
+
+    if record_waifu_file.exists():
+        with open(record_waifu_file,'r') as f:
+            line = f.read()
+            record_waifu = eval(line)
+    else:
+        record_waifu = {}
+
+    if record_yinpa1_file.exists():
+        with open(record_yinpa1_file,'r') as f:
+            line = f.read()
+            record_yinpa1 = eval(line)
+    else:
+        record_yinpa1 = {}
+
+    if record_yinpa2_file.exists():
+        with open(record_yinpa2_file,'r') as f:
+            line = f.read()
+            record_yinpa2 = eval(line)
+    else:
+        record_yinpa2 = {}
+
+    # 重置记录
+    @scheduler.scheduled_job("cron",hour = 0)
+    def _():
+        global record_yinpa1,record_yinpa2
+        record_yinpa1 = {}
+        record_yinpa2 = {}
+
+
+
+# 娶群友
 
 waifu = on_command("娶群友", permission=GROUP, priority = 90, block = True)
 
@@ -115,6 +175,10 @@ async def _(bot:Bot, event: GroupMessageEvent):
                 else:
                     pass
             else:
+                try:
+                    member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][at])
+                except:
+                    member = None
                 if random.randint(1,100) <= NTR: # 彩蛋
                     record_waifu[group_id].pop(record_waifu[group_id][at])
                     record_waifu[group_id].update(
@@ -326,13 +390,6 @@ async def _(bot:Bot, event: GroupMessageEvent):
 
 # 透群友
 
-if record_yinpa_file.exists() and os.path.getmtime(record_yinpa_file) > Zero_today:
-    with open(record_waifu_file,'r') as f:     # 读文件
-        line = f.read()
-        record_yinpa = eval(line)
-else:
-    record_yinpa = {}
-
 yinpa = on_command("透群友", permission=GROUP, priority = 90, block = True)
 yinpa_cp_command = on_command("透对象",aliases = {"透CP","透cp"}, permission=GROUP, priority = 90, block = True)
 
@@ -340,23 +397,46 @@ yinpa_cp_command = on_command("透对象",aliases = {"透CP","透cp"}, permissio
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
     user_id = event.user_id
-    global record_yinpa
+    global record_yinpa1,record_yinpa2
     at = get_message_at(event.json())
     msg = ""
-    if at and at[0] != user_id:
-        X = random.randint(1,100)
-        if 0 < X <= yinpa_HE:
-            member = await bot.get_group_member_info(group_id = group_id, user_id = at[0])
-            nickname = member['card'] or member['nickname']
-            record_yinpa.setdefault(member['user_id'],0)
-            record_yinpa[member['user_id']] += 1
-            msg = (
-                f"恭喜你涩到了群友\n",
-                MessageSegment.image(file = await user_img(member["user_id"])),
-                f"『{nickname}』！"
-                )
-        elif yinpa_HE < X < yinpa_BE:
-            msg = "不可以涩涩！"
+    if at:
+        if at[0] == user_id:
+            pass
+        elif at[0] == record_waifu[group_id].get(user_id,0):
+            X = random.randint(1,100)
+            if 0 < X <= yinpa_CP:
+                member = await bot.get_group_member_info(group_id = group_id, user_id = at[0])
+                nickname = member['card'] or member['nickname']
+                record_yinpa1.setdefault(user_id,0)
+                record_yinpa1[user_id] += 1
+                record_yinpa2.setdefault(member['user_id'],0)
+                record_yinpa2[member['user_id']] += 1
+                msg = (
+                    f"恭喜你涩到了你的对象\n",
+                    MessageSegment.image(file = await user_img(member["user_id"])),
+                    f"『{nickname}』！"
+                    )
+            else:
+                msg = "你的对象拒绝和你涩涩！"
+        else:
+            X = random.randint(1,100)
+            if 0 < X <= yinpa_HE:
+                member = await bot.get_group_member_info(group_id = group_id, user_id = at[0])
+                nickname = member['card'] or member['nickname']
+                record_yinpa1.setdefault(user_id,0)
+                record_yinpa1[user_id] += 1
+                record_yinpa2.setdefault(member['user_id'],0)
+                record_yinpa2[member['user_id']] += 1
+                msg = (
+                    f"恭喜你涩到了群友\n",
+                    MessageSegment.image(file = await user_img(member["user_id"])),
+                    f"『{nickname}』！"
+                    )
+            elif yinpa_HE < X < yinpa_BE:
+                msg = "不可以涩涩！"
+            else:
+                pass
     if not msg:
         member_list = await bot.get_group_member_list(group_id = event.group_id)
         member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
@@ -365,15 +445,18 @@ async def _(bot:Bot, event: GroupMessageEvent):
             msg = "不可以涩涩！"
         else:
             nickname = member['card'] or member['nickname']
-            record_yinpa.setdefault(member['user_id'],0)
-            record_yinpa[member['user_id']] += 1
+            record_yinpa1.setdefault(user_id,0)
+            record_yinpa1[user_id] += 1
+            record_yinpa2.setdefault(member['user_id'],0)
+            record_yinpa2[member['user_id']] += 1
             msg = (
                 "的涩涩对象是、\n",
                 MessageSegment.image(file = await user_img(member["user_id"])),
                 f"『{nickname}』！"
                 )
 
-    save(record_yinpa_file,record_yinpa)
+    save(record_yinpa1_file,record_yinpa1)
+    save(record_yinpa2_file,record_yinpa2)
     await yinpa.finish(msg, at_sender=True)
 
 @yinpa_cp_command.handle()
@@ -410,47 +493,83 @@ yinpa_list = on_command("涩涩记录",aliases = {"色色记录"}, permission=GR
 
 @yinpa_list.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
-    member_list = await bot.get_group_member_list(group_id = event.group_id)
-    member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-    record = []
-    for member in member_list:
-        nickname = member['card'] or member['nickname']
-        global record_yinpa
-        times = record_yinpa.get(member['user_id'],0)
-        if times:
-            record.append([nickname,times])
-    else:
-        record.sort(key = lambda x:x[1],reverse = True)
+    global record_yinpa1,record_yinpa2
 
     msg_list =[]
+
+    # 输出卡池
+    member_list = await bot.get_group_member_list(group_id = event.group_id)
+    member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
+
     msg ="卡池：\n——————————————\n"
     for member in member_list[:80]:
         nickname = member['card'] or member['nickname']
         msg += f"{nickname}\n"
-    else:
-        output = text_to_png(msg[:-1])
-        msg_list.append(
-            {
-                "type": "node",
-                "data": {
-                    "name": "卡池",
-                    "uin": event.self_id,
-                    "content": MessageSegment.image(output)
-                    }
-                }
-            )
 
-    msg =""
+    output = text_to_png(msg[:-1])
+    msg_list.append(
+        {
+            "type": "node",
+            "data": {
+                "name": "卡池",
+                "uin": event.self_id,
+                "content": MessageSegment.image(output)
+                }
+            }
+        )
+
+    # 输出透群友记录
+
+    record = []
+    for member in member_list:
+        nickname = member['card'] or member['nickname']
+        times = record_yinpa1.get(member['user_id'],0)
+        if times:
+            record.append([nickname,times])
+
+    record.sort(key = lambda x:x[1],reverse = True)
+
+    msg = "涩涩记录①：\n——————————————\n"
     for info in record:
-        msg += f"【{info[0]}】\n今日被透 {info[1]} 次\n"
+        msg += f"[align=left]{info[0]}[/align][align=right]今日透群友 {info[1]} 次[/align]\n"
     else:
         if msg:
-            output = text_to_png("涩涩记录：\n——————————————\n" + msg[:-1])
+            output = bbcode_to_png(msg[:-1])
             msg_list.append(
                 {
                     "type": "node",
                     "data": {
-                        "name": "记录",
+                        "name": "记录①",
+                        "uin": event.self_id,
+                        "content": MessageSegment.image(output)
+                        }
+                    }
+                )
+        else:
+            pass
+
+    # 输出被透记录
+
+    record = []
+    for member in member_list:
+        nickname = member['card'] or member['nickname']
+        times = record_yinpa2.get(member['user_id'],0)
+        if times:
+            record.append([nickname,times])
+
+    record.sort(key = lambda x:x[1],reverse = True)
+
+    msg = "涩涩记录②：\n——————————————\n"
+    for info in record:
+        msg += f"[align=left]{info[0]}[/align][align=right]今日被透 {info[1]} 次[/align]\n"
+    else:
+        if msg:
+            output = bbcode_to_png(msg[:-1])
+            msg_list.append(
+                {
+                    "type": "node",
+                    "data": {
+                        "name": "记录②",
                         "uin": event.self_id,
                         "content": MessageSegment.image(output)
                         }
@@ -460,10 +579,3 @@ async def _(bot:Bot, event: GroupMessageEvent):
             pass
     await bot.send_group_forward_msg(group_id = event.group_id, messages = msg_list)
     await yinpa_list.finish()
-
-# 重置娶群友记录
-
-@scheduler.scheduled_job("cron",hour = 0)
-def _():
-    global record_waifu,record_yinpa
-    record_yinpa = {}
