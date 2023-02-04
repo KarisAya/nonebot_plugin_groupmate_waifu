@@ -450,7 +450,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
             record_yinpa2.setdefault(member['user_id'],0)
             record_yinpa2[member['user_id']] += 1
             msg = (
-                "的涩涩对象是、\n",
+                "的涩涩对象是\n",
                 MessageSegment.image(file = await user_img(member["user_id"])),
                 f"『{nickname}』！"
                 )
