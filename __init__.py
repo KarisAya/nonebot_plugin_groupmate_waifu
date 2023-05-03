@@ -125,7 +125,11 @@ else:
     # 重置记录
     @scheduler.scheduled_job("cron",hour = 0)
     def _():
-        global record_yinpa1,record_yinpa2
+        global record_waifu,record_yinpa1,record_yinpa2
+        for group_id in record_waifu:
+            for user_id in record_waifu[group_id]:
+                if record_waifu[group_id][user_id] == user_id:
+                    record_waifu[group_id][user_id] = 0
         record_yinpa1 = {}
         record_yinpa2 = {}
 
