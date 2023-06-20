@@ -10,7 +10,7 @@
 </div>
 
 ## 需要安装
-[nonebot_plugin_imageutils](https://github.com/noneplugin/nonebot-plugin-imageutils) PIL工具插件，方便图片操作，支持文字转图片
+[pil-utils](https://github.com/MeetWq/pil-utils) PIL工具插件，方便图片操作，支持文字转图片
 
 [nonebot_plugin_apscheduler](https://github.com/nonebot/plugin-apscheduler) APScheduler 定时任务插件
 ## 安装
