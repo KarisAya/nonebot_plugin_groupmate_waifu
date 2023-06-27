@@ -3,7 +3,7 @@ import httpx
 import hashlib
 import asyncio
 
-from nonebot_plugin_imageutils import BuildImage,Text2Image
+from pil_utils import BuildImage,Text2Image
 
 try:
     import ujson as json
