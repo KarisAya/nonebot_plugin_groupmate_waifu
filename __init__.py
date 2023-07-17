@@ -1,7 +1,11 @@
 from nonebot import require
-from nonebot.plugin.on import on_command
+from nonebot.plugin.on import on_command,on_message
+from nonebot.permission import SUPERUSER
+from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import (
     GROUP,
+    GROUP_ADMIN,
+    GROUP_OWNER,
     Bot,
     GroupMessageEvent,
     Message,
@@ -27,45 +31,74 @@ from .config import Config
 # 加载全局配置
 global_config = nonebot.get_driver().config
 waifu_config = Config.parse_obj(global_config.dict())
-SUPERUSERS = waifu_config.SUPERUSERS
-
 waifu_cd_bye = waifu_config.waifu_cd_bye
-
 waifu_save = waifu_config.waifu_save
-
 waifu_reset = waifu_config.waifu_reset
-
+last_sent_time_filter = waifu_config.waifu_last_sent_time_filter
 HE = waifu_config.waifu_he
 BE = HE + waifu_config.waifu_be
 NTR = waifu_config.waifu_ntr
-
 yinpa_HE = waifu_config.yinpa_he
 yinpa_BE = yinpa_HE + waifu_config.yinpa_be
 yinpa_CP = waifu_config.yinpa_cp
 yinpa_CP = yinpa_HE if yinpa_CP == 0 else yinpa_CP
-
-pt_CD = waifu_config.pt_cd
-
 
 waifu_file = Path() / "data" / "waifu"
 
 if not waifu_file.exists():
     os.makedirs(waifu_file)
 
+record_CP_file = waifu_file / "record_CP"
+
+if record_CP_file.exists():
+    with open(record_CP_file,'r') as f:
+        line = f.read()
+        record_CP = eval(line)
+else:
+    record_CP = {}
+
 record_waifu_file = waifu_file / "record_waifu"
+if record_waifu_file.exists():
+    with open(record_waifu_file,'r') as f:
+        line = f.read()
+        record_waifu = eval(line)
+else:
+    record_waifu = {}
+
+record_lock_file = waifu_file / "record_lock"
+if record_lock_file.exists():
+    with open(record_lock_file,'r') as f:
+        line = f.read()
+        record_lock = eval(line)
+else:
+    record_lock = {}
+
 record_yinpa1_file = waifu_file / "record_yinpa1"
+if record_yinpa1_file.exists():
+    with open(record_yinpa1_file,'r') as f:
+        line = f.read()
+        record_yinpa1 = eval(line)
+else:
+    record_yinpa1 = {}
 record_yinpa2_file = waifu_file / "record_yinpa2"
-protectlist_file = waifu_file / "list_protect"
+if record_yinpa2_file.exists():
+    with open(record_yinpa2_file,'r') as f:
+        line = f.read()
+        record_yinpa2 = eval(line)
+else:
+    record_yinpa2 = {}
+
 
 if waifu_save:
     def save(file, data):
         with open(file, "w", encoding="utf8") as f:
             f.write(str(data))
 else:
-    def save(file, data):
+    def save(*args):
         pass
 
-scheduler = require("nonebot_plugin_apscheduler").scheduler
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
 
 if waifu_reset:
 
@@ -74,201 +107,105 @@ if waifu_reset:
     timeArray = time.strptime(timestr,'%Y-%m-%d')
     Zero_today = time.mktime(timeArray)
 
+    if record_CP_file.exists() and os.path.getmtime(record_CP_file) < Zero_today:
+        record_CP = {}
     if record_waifu_file.exists() and os.path.getmtime(record_waifu_file) > Zero_today:
-        with open(record_waifu_file,'r') as f:
-            line = f.read()
-            record_waifu = eval(line)
-    else:
         record_waifu = {}
-
+    if record_lock_file.exists() and os.path.getmtime(record_lock_file) > Zero_today:
+        record_lock = {}
     if record_yinpa1_file.exists() and os.path.getmtime(record_yinpa1_file) > Zero_today:
-        with open(record_yinpa1_file,'r') as f:
-            line = f.read()
-            record_yinpa1 = eval(line)
-    else:
         record_yinpa1 = {}
-
     if record_yinpa2_file.exists() and os.path.getmtime(record_yinpa2_file) > Zero_today:
-        with open(record_yinpa2_file,'r') as f:
-            line = f.read()
-            record_yinpa2 = eval(line)
-    else:
         record_yinpa2 = {}
 
     # 重置记录
-
-    @scheduler.scheduled_job("cron",hour = 0)
+    @scheduler.scheduled_job("cron",hour = 0, misfire_grace_time = 120)
     def _():
-        global record_waifu,record_yinpa1,record_yinpa2
-        record_waifu = {}
+        global record_CP,record_yinpa1,record_yinpa2
+        record_CP = {}
         record_yinpa1 = {}
         record_yinpa2 = {}
 else:
-
-    if record_waifu_file.exists():
-        with open(record_waifu_file,'r') as f:
-            line = f.read()
-            record_waifu = eval(line)
-    else:
-        record_waifu = {}
-
-    if record_yinpa1_file.exists():
-        with open(record_yinpa1_file,'r') as f:
-            line = f.read()
-            record_yinpa1 = eval(line)
-    else:
-        record_yinpa1 = {}
-
-    if record_yinpa2_file.exists():
-        with open(record_yinpa2_file,'r') as f:
-            line = f.read()
-            record_yinpa2 = eval(line)
-    else:
-        record_yinpa2 = {}
-    if protectlist_file.exists():
-        with open(protectlist,'r') as f:
-            line = f.read()
-            protectlist = eval(line)
-    else:
-        protectlist = {}
-
     # 重置记录
-    @scheduler.scheduled_job("cron",hour = 0)
+    @scheduler.scheduled_job("cron",hour = 0, misfire_grace_time = 120)
     def _():
-        global record_waifu,record_yinpa1,record_yinpa2
-        for group_id in record_waifu:
-            for user_id in record_waifu[group_id]:
-                if record_waifu[group_id][user_id] == user_id:
-                    record_waifu[group_id][user_id] = 0
+        global record_CP,record_yinpa1,record_yinpa2
+        for group_id in record_CP:
+            for user_id in record_CP[group_id]:
+                if record_CP[group_id][user_id] == user_id:
+                    record_CP[group_id][user_id] = 0
         record_yinpa1 = {}
         record_yinpa2 = {}
 
-#保护名单
-global cd_pt
-cd_pt = {}
+protect_list_file = waifu_file / "list_protect"
+if protect_list_file.exists():
+    with open(protect_list_file,'r') as f:
+        line = f.read()
+        protect_list = eval(line)
+else:
+    protect_list = {}
 
-protect = on_command("娶群友加锁", permission=GROUP, priority = 90,block = True)
+#设置保护名单
+
+protect = on_command("娶群友保护", priority = 90, block = True)
 
 @protect.handle()
-async def _(bot:Bot, event: GroupMessageEvent):
+async def _(bot:Bot, event: GroupMessageEvent, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER):
     group_id = event.group_id
-    user_id = event.user_id
-    global record_waifu_file, record_waifu, protectlist_file, protectlist, cd_pt
-    record_waifu.setdefault(group_id,{})
-    protectlist.setdefault(group_id,{})
-    cd_pt.setdefault(group_id,{})
-    flag = cd_pt[group_id].setdefault(user_id,[0])
-    at = get_message_at(event.json())
-    self_do = False
-    if user_id in SUPERUSERS or user_id in at:
-        if user_id in at and user_id not in SUPERUSERS:
-            self_do = True
-        if at:
-            if not self_do:
-                for at_id in at:
-                    if record_waifu[group_id].get(at_id, 0) not in (0, at_id):
-                        at_cp = record_waifu[group_id][at_id]
-                        del record_waifu[group_id][at_id]
-                        del record_waifu[group_id][at_cp]
-                    if at_id in protectlist[group_id].keys():
-                        if protectlist[group_id][at_id] == 1:
-                            await protect.send("操作对象已被保护，操作对象是" + MessageSegment.at(at_id), at_sender =True)
-                            await asyncio.sleep(1)
-                        elif protectlist[group_id][at_id] == 0:
-                            protectlist[group_id].update({at_id:1})
-                            await protect.send("保护成功，操作对象是", at_sender =True)
-                            await asyncio.sleep(1)
-                        else:
-                            protectlist[group_id].update({at_id:1})
-                            await protect.send("原参数为非法参数，已修正为保护状态", at_sender =True)
-                            await asyncio.sleep(1)
-                    else:
-                        protectlist[group_id].update({at_id:1})
-                        await protect.send("初次执行保护操作成功，操作对象是" + MessageSegment.at(at_id), at_sender =True)
-                        await asyncio.sleep(1)
-            else:
-                if record_waifu[group_id].get(user_id, 0) not in (0, user_id):
-                    at_cp = record_waifu[group_id][user_id]
-                    del record_waifu[group_id][user_id]
-                    del record_waifu[group_id][at_cp]
-                global pt_CD
-                if pt_CD < waifu_cd_bye and waifu_cd_bye >= 0:
-                    pt_CD = waifu_cd_bye
-                    await protect.send("保护冷却时间必须大于等于分手冷却时间，已使用分手冷却时间", at_sender =True)
-                    await asyncio.sleep(1)
-                cd_pt[group_id][user_id][0] = time.time() + pt_CD
-                protectlist[group_id].update({user_id:1})
-                await protect.send("成功保护自己", at_sender =True)
-                await asyncio.sleep(1)
-            save(record_waifu_file, record_waifu)
-            save(protectlist_file, protectlist)
-        else:
-            await protect.send("未指定保护目标，指令处理终止", at_sender =True)
-            await asyncio.sleep(1)
+    protect_list.setdefault(group_id,set())
+    at = get_message_at(event.message)
+    if not at:
+        protect_list[group_id].add(event.user_id)
+        save(protect_list_file,protect_list)
+        await protect.finish("保护成功！", at_sender =True)
+    elif await permission(bot,event):
+        protect_list[group_id].update(set(at))
+        namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in at if (member := await bot.get_group_member_info(group_id,user_id))])
+        save(protect_list_file,protect_list)
+        await protect.finish(f"保护成功！\n保护名单为：\n{namelist}",at_sender =True)
     else:
-        await protect.send("非超级管理员或操作对象自身，无权限操作", at_sender =True)
-        await asyncio.sleep(1)
-    
-    await protect.finish()
+        await protect.finish("保护失败。你无法为其他人设置保护。", at_sender =True)
 
 #移出保护名单
 
-unprotect = on_command("娶群友解锁", permission=GROUP, priority = 90,block = True)
+unprotect = on_command("娶群友解除保护", priority = 90,block = True)
 
 @unprotect.handle()
+async def _(bot:Bot, event: GroupMessageEvent, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER):
+    group_id = event.group_id
+    protect_list.setdefault(group_id,set())
+    at = get_message_at(event.message)
+    if not at:
+        user_id = event.user_id
+        if user_id in protect_list[group_id]:
+            protect_list[group_id].discard(user_id)
+            save(protect_list_file,protect_list)
+            await unprotect.finish("解除保护成功！", at_sender =True)
+        else:
+            await unprotect.finish("你不在保护名单内。", at_sender =True)
+    elif await permission(bot,event):
+        inner_protect = protect_list[group_id]
+        valid_at = inner_protect.intersection(set(at))
+        if not valid_at:
+            await unprotect.finish("保护名单内不存在指定成员。",at_sender =True)
+        protect_list[group_id] -= valid_at
+        save(protect_list_file,protect_list)
+        namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in valid_at if (member := await bot.get_group_member_info(group_id,user_id))])
+        await unprotect.finish(f"解除保护成功！\n解除保护名单为：\n{namelist}",at_sender =True)
+    else:
+        await unprotect.finish("解除保护失败。你无法为其他人解除保护。", at_sender =True)
+
+# 查看保护名单
+show_protect = on_command("查看保护名单", priority = 90,block = True)
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
-    user_id = event.user_id
-    global protectlist_file, protectlist, cd_pt
-    protectlist.setdefault(group_id,{})
-    cd_pt.setdefault(group_id,{})
-    flag = cd_pt[group_id].setdefault(user_id,[0])
-    cd = flag[0] - time.time()
-    at = get_message_at(event.json())
-    self_do = False
-    if user_id in SUPERUSERS or user_id in at:
-        if user_id in at and user_id not in SUPERUSERS:
-            self_do = True
-        if at:
-            if not self_do:
-                for at_id in at:
-                    if at_id in protectlist[group_id].keys():
-                        if protectlist[group_id][at_id] == 1:
-                            protectlist[group_id].update({at_id:0})
-                            await unprotect.send("解除保护成功，操作对象是" + MessageSegment.at(at_id), at_sender =True)
-                            await asyncio.sleep(1)
-                        elif protectlist[group_id][at_id] == 0:
-                            await unprotect.send("当前已是未保护状态，指令处理终止", at_sender =True)
-                            await asyncio.sleep(1)
-                        else:
-                            protectlist[group_id].update({at_id:0})
-                            await unprotect.send("原参数为非法参数，已修正为未保护状态", at_sender =True)
-                            await asyncio.sleep(1)
-                    else:
-                        protectlist[group_id].update({at_id:0})
-                        await unprotect.send("初次执行未保护操作成功，操作对象是" + MessageSegment.at(at_id), at_sender =True)
-                        await asyncio.sleep(1)
-            else:
-                if cd <= 0:
-                    del cd_pt[group_id][user_id]
-                    protectlist[group_id].update({user_id:0})
-                    await unprotect.send("成功解除保护自己", at_sender =True)
-                    await asyncio.sleep(1)
-                else:
-                    await unprotect.send(f"操作失败，你的解锁cd还有{round(cd/60,1)}分钟", at_sender =True)
-                    await asyncio.sleep(1)
-            save(protectlist_file,protectlist)
-        else:
-            await unprotect.send("未指定已保护目标，指令处理终止", at_sender =True)
-            await asyncio.sleep(1)
-    else:
-        await unprotect.send("非超级管理员或操作对象自身，无权限操作", at_sender =True)
-        await asyncio.sleep(1)
-    await protect.finish()
-
+    lst = protect_list.get(group_id)
+    if not lst:
+        await show_protect.finish("保护名单为空")
+    namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in lst if (member := await bot.get_group_member_info(group_id,user_id))])
+    await show_protect.finish(MessageSegment.image(text_to_png(f"保护名单为：\n{namelist}")))
+     
 # 娶群友
-
-waifu = on_command("娶群友", permission=GROUP, priority = 90, block = True)
 
 no_waifu = [
     "你没有娶到群友，强者注定孤独，加油！",
@@ -276,6 +213,7 @@ no_waifu = [
     "恭喜你没有娶到老婆~",
     "さんが群友で結婚するであろうヒロインは、\n『自分の左手』です！"
     ]
+
 happy_end= [
     "好耶~",
     "需要咱主持婚礼吗qwq",
@@ -284,469 +222,301 @@ happy_end= [
     "祝你们生八个。"
     ]
 
+async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
+    """
+    规则：娶群友
+    """
+    msg = event.message.extract_plain_text()
+    if not msg.startswith("娶群友"):
+        return False
+    user_id = event.user_id
+    at = get_message_at(event.message)
+    tips = "你的群友結婚对象是、"
+    if waifu_id := record_CP.get(user_id):
+        try:
+            member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_id)
+        except:
+            waifu_id = user_id
+            return True
+        if at:
+            if waifu_id in at:
+                msg = "这是你的CP！" + random.choice(happy_end) + MessageSegment.image(file = await user_img(waifu_id))
+                if user_id in record_waifu.get(group_id,set()):
+                    record_lock.setdefault(group_id)
+                    record_lock[group_id][waifu_id] = user_id
+                    record_lock[group_id][user_id] = waifu_id
+                    save(record_lock_file,record_lock)
+                    msg += "\ncp已锁！"
+            else:
+                msg = "你已经有CP了，不许花心哦~" + MessageSegment.image(file = await user_img(waifu_id)) + f"你的CP：{member['card'] or member['nickname']}"
+        else:
+            msg = tips + MessageSegment.image(file = await user_img(record_CP[group_id][user_id])) + f"『{member['card'] or member['nickname']}』！"
+        await bot.send(event,msg,at_sender = True)
+        return False
+    if at:
+        X = random.randint(1,100)
+        if 0 < X <= HE:
+            waifu_id = at[0]
+            tips = "恭喜你娶到了群友\n" + tips
+        elif HE < X <= BE:
+            waifu_id = user_id
+    if not waifu_id:
+        group_id = event.group_id
+        member_list = await bot.get_group_member_list(group_id = group_id)
+        lastmonth = event.time - last_sent_time_filter
+        id_list = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth}
+        waifu_ids = id_list - set(record_CP[group_id].keys())
+        waifu_ids -= protect_list.get(group_id,set())
+        if waifu_ids:
+            waifu_id = random.choice[waifu_ids]
+        else:
+            msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
+            await bot.send(event,msg,at_sender = True)
+            return False
+    state["waifu"] = waifu_id,tips
+    return True
+
+waifu = on_message(rule = waifu_rule, priority = 90, block = True)
+
 @waifu.handle()
-async def _(bot:Bot, event: GroupMessageEvent):
-    access = True
+async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
     group_id = event.group_id
     user_id = event.user_id
-    global record_waifu_file, record_waifu, protectlist_file, protectlist
-    record_waifu.setdefault(group_id,{})
-    protectlist.setdefault(group_id,{})
-    protectlist[group_id].setdefault(user_id, 0)
-    at = get_message_at(event.json())
-    for ignore in at:
-        protectlist[group_id].setdefault(ignore, 0)
-        if protectlist[group_id][ignore] == 1:
-            at.remove(ignore)
-        if not at:
-            access = False
-            break
-    if access:
-        if protectlist[group_id][user_id] == 1:
-            access = False
-    if access:
-        if at and at[0] != user_id:
-            at = at[0]
-            if record_waifu[group_id].get(user_id,0) == 0:
-                if record_waifu[group_id].get(at,0) in (0, at):
-                    X = random.randint(1,100)
-                    if 0 < X <= HE:
-                        record_waifu[group_id].update(
-                            {
-                                user_id: at,
-                                at: user_id
-                                    }
-                            )
-                        await waifu.send("恭喜你娶到了群友" + MessageSegment.at(at), at_sender=True)
-                        await asyncio.sleep(1)
-                    elif HE < X <= BE:
-                        record_waifu[group_id][user_id] = user_id
-                    else:
-                        pass
-                else:
-                    try:
-                        member = await bot.get_group_member_info(group_id = group_id, user_id =record_waifu[group_id][at])
-                    except:
-                        member = None
-                    if random.randint(1,100) <= NTR: # 彩蛋
-                        record_waifu[group_id].pop(record_waifu[group_id][at])
-                        record_waifu[group_id].update(
-                            {
-                                user_id: at,
-                                at: user_id
-                                }
-                            )
-                        await waifu.send(
-                            "人家已经名花有主了~" + 
-                            MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
-                            "ta的CP：" + ( member['card'] or member['nickname'] ) + '\n'
-                            "但是...",
-                            at_sender=True
-                            )
-                    else:
-                        await waifu.send(
-                            "人家已经名花有主啦！" + 
-                            MessageSegment.image(file = await user_img(record_waifu[group_id][at])) +
-                            "ta的CP：" + ( member['card'] or member['nickname'] ),
-                            at_sender=True
-                            )
-                    await asyncio.sleep(1)
-            elif record_waifu[group_id][user_id] == at:
-                await waifu.finish(
-                    "这是你的CP！"+ MessageSegment.at(record_waifu[group_id][user_id]) + '\n' +
-                    random.choice(happy_end) +
-                    MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                    at_sender=True
-                    )
-            elif record_waifu[group_id][user_id] == user_id:
-                pass
-            else:
-                try:
-                    member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
-                except:
-                    member = None
-                if member:
-                    await waifu.finish(
-                        "你已经有CP了，不许花心哦~" +
-                        MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])) +
-                        "你的CP：" + ( member['card'] or member['nickname'] ),
-                        at_sender=True
-                        )
-                else:
-                    record_waifu[group_id][user_id] = user_id
-    
-        if record_waifu[group_id].get(user_id,0) == 0:
-            member_list = await bot.get_group_member_list(group_id = event.group_id)
-            i = 0
-            while i < len(member_list):
-                ml = member_list[i]['user_id']
-                if ml in record_waifu[group_id].keys():
-                    del member_list[i]
-                elif ml in protectlist[group_id] and protectlist[group_id][ml] == 1:
-                    del member_list[i]
-                else:
-                    i += 1
-            else:
-                if member_list:
-                    member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-                    member = random.choice(member_list[:80])
-                    record_waifu[group_id].update(
-                        {
-                            user_id: member['user_id'],
-                            member['user_id']: user_id
-                            }
-                        )
-                    nickname = member['card'] or member['nickname']
-                    if record_waifu[group_id][user_id] == user_id:
-                        msg = random.choice(no_waifu)
-                    else:
-                        msg = (
-                            "的群友結婚对象是、\n",
-                            MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                            f"『{nickname}』！"
-                            )
-                else:
-                    record_waifu[group_id][user_id] = 1
-                    msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
+    waifu_id,tips = state["waifu"]
+    if waifu_id == user_id:
+        await waifu.finish(random.choice(no_waifu),at_sender = True)
+    rec = record_CP.setdefault(group_id,{})
+    waifu_set = record_waifu.setdefault(group_id,set())
+    if waifu_id in rec:
+        waifu_cp = rec[waifu_id]
+        member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_cp)
+        tips = "人家已经名花有主了~" + MessageSegment.image(file = await user_img(waifu_cp)) + "ta的cp：" + (member['card'] or member['nickname'])
+        if waifu_id in record_lock.get(group_id,{}).keys():
+            await waifu.finish(tips + "\n本对cp已锁！",at_sender = True)
+        elif random.randint(1,100) <= NTR: # 彩蛋
+            rec.pop(waifu_cp)
+            waifu_set.discard(waifu_cp)
+            await waifu.send(tips + "\n但是...",at_sender = True)
+            await asyncio.sleep(1)
         else:
-            if record_waifu[group_id][user_id] == event.user_id:
-                msg = random.choice(no_waifu)
-            elif record_waifu[group_id][user_id] == 1:
-                msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
-            else:
-                try:
-                    member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
-                except:
-                    member = None
-                if member:
-                    nickname = member['card'] or member['nickname']
-                    msg = (
-                        "的群友結婚对象是、\n",
-                        MessageSegment.image(file = await user_img(record_waifu[group_id][user_id])),
-                        f"『{nickname}』！"
-                        )
-                else:
-                    msg = random.choice(no_waifu)
-    
-        save(record_waifu_file,record_waifu)
-        save(protectlist_file,protectlist)
-    else:
-        await waifu.send("你和/或对方在受保护中，指令处理终止", at_sender=True)
-        await asyncio.sleep(1)
+            await waifu.finish(tips,at_sender = True)
+    record_CP[group_id][user_id] = waifu_id
+    record_CP[group_id][waifu_id] = user_id
+    waifu_set.add(waifu_id)
+    member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_id)
+    msg = tips + MessageSegment.image(file = await user_img(waifu_id)) + f"『{(member['card'] or member['nickname'])}』！"
+    save(record_CP_file,record_CP)
     await waifu.finish(msg, at_sender=True)
 
 # 分手
+if waifu_cd_bye > 0:
+    global cd_bye
+    cd_bye = {}
 
-async def FACTOR(bot: Bot, event: GroupMessageEvent) -> bool:
-    global record_waifu
-    record_waifu.setdefault(event.group_id,{})
-    return record_waifu[event.group_id].get(event.user_id,0) not in (0, 1, event.user_id) and waifu_cd_bye != -1
-
-global cd_bye
-cd_bye = {}
-
-bye = on_command("离婚", aliases = {"分手"}, permission = FACTOR, priority = 90, block = True)
-
-@bye.handle()
-async def _(bot:Bot, event: GroupMessageEvent):
-    global record_waifu_file, record_waifu, cd_bye
-    cd_bye.setdefault(event.group_id,{})
-    flag = cd_bye[event.group_id].setdefault(event.user_id,[0,0])
-    Now = time.time()
-    cd = flag[0] - Now
-    if cd <= 0:
-        cd_bye[event.group_id][event.user_id][0] = Now + waifu_cd_bye
-        A = event.user_id
-        B = int(record_waifu[event.group_id][event.user_id])
-        del record_waifu[event.group_id][A]
-        del record_waifu[event.group_id][B]
-        save(record_waifu_file,record_waifu)
-        if random.randint(1,2) == 1:
-            await bye.finish(random.choice(("嗯。","...","好。")))
+    bye = on_command(
+        "离婚",
+        aliases = {"分手"},
+        rule = lambda event:event.group_id in record_CP and record_CP[event.group_id].get(event.user_id,event.user_id) != event.user_id,
+        priority = 90,
+        block = True
+        )
+    @bye.handle()
+    async def _(bot:Bot, event: GroupMessageEvent):
+        group_id = event.group_id
+        user_id = event.user_id
+        cd_bye.setdefault(group_id,{})
+        T,N,A = cd_bye[group_id].setdefault(user_id,[0,0,0])
+        Now = event.time
+        cd = T - Now
+        if Now > T:
+            cd_bye[group_id][user_id] = [Now + waifu_cd_bye, 0]
+            rec = record_CP[group_id]
+            waifu_set = record_waifu.setdefault(group_id,set())
+            waifu_id = rec[user_id]
+            del rec[user_id]
+            del rec[waifu_id]
+            waifu_set.discard(user_id)
+            waifu_set.discard(waifu_id)
+            save(record_CP_file,record_CP)
+            if random.randint(1,2) == 1:
+                await bye.finish(random.choice(("嗯。","...","好。")))
+            else:
+                await bye.finish(Message(f'[CQ:poke,qq={event.user_id}]'))
         else:
-            await bye.finish(Message(f'[CQ:poke,qq={event.user_id}]'))
-    else:
-        flag[1] += 1
-        if flag[1] == 1:
-            await bye.finish(f"你的cd还有{round(cd/60,1)}分钟。", at_sender=True)
-        elif flag[1] <= 3:
-            await bye.finish(f"你已经问过了哦~ 你的cd还有{round(cd/60,1)}分钟。", at_sender=True)
-        elif flag[1] <= 10:
-            t = random.randint(flag[1], 3 * flag[1])
-            flag[0] += t * 60
-            await bye.finish(f"还问！罚时！你的cd还有{round(cd/60,1)}+{t}分钟。", at_sender=True)
-        else:
-            if random.randint(1,6) == 6:
-                await bye.finish("哼！")
+            if A > Now:
+                A = Now
+                N = 0
+            else:
+                N += 1
+            if N == 1:
+                msg = f"你的cd还有{round(cd/60,1)}分钟。"
+            elif N == 2:
+                msg = f"你已经问过了哦~ 你的cd还有{round(cd/60,1)}分钟。"
+            elif N < 6:
+                T += 10
+                msg = f"还问！罚时！你的cd还有{round(cd/60,1)}+10分钟。"
+            elif random.randint(0,2) == 0:
+                msg = "哼！"
+            else:
+                msg = ""
+            cd_bye[group_id][user_id] = [T,N,A]
+            await bye.finish(msg, at_sender = True)
 
 # 查看娶群友卡池
 
-waifu_list = on_command("查看群友卡池", aliases = {"群友卡池"}, permission = GROUP, priority = 90, block = True)
+waifu_list = on_command("查看群友卡池", aliases = {"群友卡池"}, priority = 90, block = True)
 
 @waifu_list.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
-    member_list = await bot.get_group_member_list(group_id = event.group_id)
-    protectlist.setdefault(group_id,{})
-    i = 0
-    while i < len(member_list):
-        ml = member_list[i]['user_id']
-        if ml in record_waifu[group_id].keys():
-            del member_list[i]
-        elif ml in protectlist[group_id] and protectlist[group_id][ml] == 1:
-            del member_list[i]
-        else:
-            i += 1
+    group_id = event.group_id
+    member_list = await bot.get_group_member_list(group_id = group_id)
+    lastmonth = event.time - last_sent_time_filter
+    waifu_ids = protect_list.get(group_id,set()) | set(record_CP.get(group_id).keys())
+    member_list = [member for member in member_list if member['user_id'] not in waifu_ids and member["last_sent_time"] > lastmonth]
+    member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
+    if member_list:
+        msg ="卡池：\n——————————————\n"
+        for member in member_list[:80]:
+            msg += f"{member['card'] or member['nickname']}\n"
+        await waifu_list.finish(MessageSegment.image(text_to_png(msg[:-1])))
     else:
-        if member_list:
-            member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-            msg ="卡池：\n——————————————\n"
-            for member in member_list[:80]:
-                nickname = member['card'] or member['nickname']
-                msg += f"{nickname}\n"
-            else:
-                output = text_to_png(msg[:-1])
-                await waifu_list.finish(MessageSegment.image(output))
-        else:
-            await waifu_list.finish("群友已经被娶光了。")
+        await waifu_list.finish("群友已经被娶光了。")
 
 # 查看本群CP
 
-cp_list = on_command("本群CP", aliases = {"本群cp"}, permission=GROUP, priority = 90, block = True)
+cp_list = on_command("本群CP", aliases = {"本群cp"}, priority = 90, block = True)
 
 @cp_list.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
-    global record_waifu
-    record_waifu.setdefault(group_id,{})
-    lst = record_waifu[group_id].keys()
-    if lst:
-        listA = []
-        listB = []
-        for A in lst:
-            listA.append(A)
-            B = record_waifu[group_id][A]
-            if B not in listA and B != A:
-                listB.append(B)
+    waifu_set = record_waifu.setdefault(group_id,set())
+    if not waifu_set:
+        msg = "本群暂无cp哦~"
+    rec = record_CP.get(group_id)
+    msg = ""
+    for waifu_id in waifu_set:
+        user_id = rec[waifu_id]
+        try:
+            member = await bot.get_group_member_info(group_id = group_id, user_id = user_id)
+            niknameA = member['card'] or member['nickname']
+        except:
+            niknameA = ""
+        try:
+            member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_id)
+            niknameB = member['card'] or member['nickname']
+        except:
+            niknameB = ""
 
-        msg = ""
-        for user_id in listB:
-            try:
-                member = await bot.get_group_member_info(group_id = group_id, user_id = record_waifu[group_id][user_id])
-                niknameA = member['card'] or member['nickname']
-            except:
-                niknameA = ""
-            try:
-                member = await bot.get_group_member_info(group_id = group_id, user_id = user_id)
-                niknameB = member['card'] or member['nickname']
-            except:
-                niknameB = ""
-            msg += f"♥ {niknameA} | {niknameB}\n"
-        if msg:
-            output = text_to_png("本群CP：\n——————————————\n" + msg[:-1])
-            await cp_list.finish(MessageSegment.image(output))
-
-    await cp_list.finish("本群暂无cp哦~")
+        msg += f"♥ {niknameA} | {niknameB}\n"
+    else:
+        msg = MessageSegment.image(text_to_png("本群CP：\n——————————————\n" + msg[:-1]))
+    await cp_list.finish(msg)
 
 
 # 透群友
+async def yinpa_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
+    """
+    规则：透群友
+    """
+    msg = event.message.extract_plain_text()
+    if not msg.startswith("透群友"):
+        return False
+    user_id = event.user_id
+    yinpa_id = None
+    at = get_message_at(event.message)
+    tips = "你的涩涩对象是、"
+    if at:
+        at = at[0]
+        if at == user_id:
+            msg = f"恭喜你涩到了你自己！" + MessageSegment.image(file = await user_img(user_id))
+            await bot.send(event,msg,at_sender = True)
+            return False
+        elif at == record_CP[group_id].get(user_id,0):
+            if 0 < X <= yinpa_CP:
+                tips = "恭喜你涩到了你的老婆！"
+            else:
+                await bot.send(event,"你的老婆拒绝和你涩涩！",at_sender = True)
+                return False
+        X = random.randint(1,100)
+        if 0 < X <= yinpa_HE:
+            yinpa_id = at[0]
+            tips = "恭喜你涩到了群友！" + tips
+        elif yinpa_HE < X <= yinpa_BE:
+            yinpa_id = user_id
+    if not yinpa_id:
+        group_id = event.group_id
+        member_list = await bot.get_group_member_list(group_id = group_id)
+        lastmonth = event.time - last_sent_time_filter
+        yinpa_ids = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth} - protect_list.get(group_id,set())
+        if not yinpa_ids:
+            return False
+        else:
+            yinpa_id = random.choice[yinpa_ids]
+    state["yinpa"] = yinpa_id,tips
+    return True
 
-yinpa = on_command("透群友", permission=GROUP, priority = 90, block = True)
+yinpa = on_message(rule = yinpa_rule, priority = 90, block = True)
 
 @yinpa.handle()
-async def _(bot:Bot, event: GroupMessageEvent):
-    access = True
+async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
     group_id = event.group_id
     user_id = event.user_id
-    global record_yinpa1, record_yinpa2, protectlist_file, protectlist
-    protectlist.setdefault(group_id,{})
-    protectlist[group_id].setdefault(user_id, 0)
-    at = get_message_at(event.json())
-    msg = ""
-    for ignore in at:
-        protectlist[group_id].setdefault(ignore, 0)
-        if protectlist[group_id][ignore] == 1:
-            at.remove(ignore)
-        if not at:
-            access = False
-            break
-    if access:
-        if protectlist[group_id][user_id] == 1:
-            access = False
-    if access:
-        if at:
-            if at[0] == user_id:
-                pass
-            elif at[0] == record_waifu[group_id].get(user_id,0):
-                cp_id = record_waifu[group_id][user_id]
-                protectlist[group_id].setdefault(cp_id, 0)
-                if protectlist[group_id][cp_id] == 1:
-                    msg = '你和/或对方在受保护中，指令处理终止'
-                else:
-                    X = random.randint(1,100)
-                    if 0 < X <= yinpa_CP:
-                        member = await bot.get_group_member_info(group_id = group_id, user_id = at[0])
-                        nickname = member['card'] or member['nickname']
-                        record_yinpa1.setdefault(user_id,0)
-                        record_yinpa1[user_id] += 1
-                        record_yinpa2.setdefault(member['user_id'],0)
-                        record_yinpa2[member['user_id']] += 1
-                        msg = (
-                            f"恭喜你涩到了你的老婆\n",
-                            MessageSegment.image(file = await user_img(member["user_id"])),
-                            f"『{nickname}』！"
-                            )
-                    else:
-                        msg = "你的老婆拒绝和你涩涩！"
-            else:
-                X = random.randint(1,100)
-                if 0 < X <= yinpa_HE:
-                    member = await bot.get_group_member_info(group_id = group_id, user_id = at[0])
-                    nickname = member['card'] or member['nickname']
-                    record_yinpa1.setdefault(user_id,0)
-                    record_yinpa1[user_id] += 1
-                    record_yinpa2.setdefault(member['user_id'],0)
-                    record_yinpa2[member['user_id']] += 1
-                    msg = (
-                        f"恭喜你涩到了群友\n",
-                        MessageSegment.image(file = await user_img(member["user_id"])),
-                        f"『{nickname}』！"
-                        )
-                elif yinpa_HE < X < yinpa_BE:
-                    msg = "不可以涩涩！"
-                else:
-                    pass
-        if not msg:
-            member_list = await bot.get_group_member_list(group_id = event.group_id)
-            i = 0
-            while i < len(member_list):
-                ml = member_list[i]['user_id']
-                if ml in record_waifu[group_id].keys():
-                    del member_list[i]
-                elif ml in protectlist[group_id] and protectlist[group_id][ml] == 1:
-                    del member_list[i]
-                else:
-                    i += 1
-            member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-            member = random.choice(member_list[:80])
-            if member["user_id"] == event.user_id:
-                msg = "不可以涩涩！"
-            else:
-                nickname = member['card'] or member['nickname']
-                record_yinpa1.setdefault(user_id,0)
-                record_yinpa1[user_id] += 1
-                record_yinpa2.setdefault(member['user_id'],0)
-                record_yinpa2[member['user_id']] += 1
-                msg = (
-                    "的涩涩对象是\n",
-                    MessageSegment.image(file = await user_img(member["user_id"])),
-                    f"『{nickname}』！"
-                    )
-    
-        save(record_yinpa1_file,record_yinpa1)
-        save(record_yinpa2_file,record_yinpa2)
-    else:
-        msg = '你和/或对方在受保护中，指令处理终止'
+    yinpa_id,tips = state["yinpa"]
+    member = await bot.get_group_member_info(group_id = group_id, user_id = yinpa_id)
+    msg = tips + MessageSegment.image(file = await user_img(yinpa_id)) + f"『{(member['card'] or member['nickname'])}』！"
+    record_yinpa1[user_id] = record_yinpa1.get(user_id,0) + 1
+    save(record_yinpa1_file,record_yinpa1)
+    record_yinpa2[user_id] = record_yinpa2.get(yinpa_id,0) + 1
+    save(record_yinpa2_file,record_yinpa2)
     await yinpa.finish(msg, at_sender=True)
 
 # 查看涩涩记录
 
-yinpa_list = on_command("涩涩记录",aliases = {"色色记录"}, permission=GROUP, priority = 90, block = True)
+yinpa_list = on_command("涩涩记录",aliases = {"色色记录"}, priority = 90, block = True)
 
 @yinpa_list.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
-    global record_yinpa1,record_yinpa2
-
+    group_id = event.group_id
     msg_list =[]
-
     # 输出卡池
-    protectlist.setdefault(group_id,{})
     member_list = await bot.get_group_member_list(group_id = event.group_id)
-    i = 0
-    while i < len(member_list):
-        ml = member_list[i]['user_id']
-        if ml in record_waifu[group_id].keys():
-            del member_list[i]
-        elif ml in protectlist[group_id] and protectlist[group_id][ml] == 1:
-            del member_list[i]
-        else:
-            i += 1
+    lastmonth = event.time - last_sent_time_filter
+    protect_set = protect_list.get(group_id,set())
+    member_list = [member for member in member_list if member['user_id'] not in protect_set and member["last_sent_time"] > lastmonth]
     member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
-
-    msg ="卡池：\n——————————————\n"
-    for member in member_list[:80]:
-        nickname = member['card'] or member['nickname']
-        msg += f"{nickname}\n"
-
-    output = text_to_png(msg[:-1])
-    msg_list.append(
-        {
-            "type": "node",
-            "data": {
-                "name": "卡池",
-                "uin": event.self_id,
-                "content": MessageSegment.image(output)
-                }
-            }
-        )
+    msg = "卡池：\n——————————————\n"
+    msg += "\n".join([(member['card'] or member['nickname']) for member in member_list[:80]])
+    msg_list.append({"type": "node",
+                     "data": {
+                         "name": "卡池",
+                         "uin": event.self_id,
+                         "content": MessageSegment.image(text_to_png(msg))}})
 
     # 输出透群友记录
 
-    record = []
-    for member in member_list:
-        nickname = member['card'] or member['nickname']
-        times = record_yinpa1.get(member['user_id'],0)
-        if times:
-            record.append([nickname,times])
-
-    record.sort(key = lambda x:x[1],reverse = True)
-
-    msg = "涩涩记录①：\n——————————————\n"
-    for info in record:
-        msg += f"[align=left]{info[0]}[/align][align=right]今日透群友 {info[1]} 次[/align]\n"
-    else:
-        if msg:
-            output = bbcode_to_png(msg[:-1])
-            msg_list.append(
-                {
-                    "type": "node",
-                    "data": {
-                        "name": "记录①",
-                        "uin": event.self_id,
-                        "content": MessageSegment.image(output)
-                        }
-                    }
-                )
-        else:
-            pass
+    record = [((member['card'] or member['nickname']),times) for member in member_list if (times := record_yinpa1.get(member['user_id']))]
+    record.sort(key = lambda x:x[1], reverse = True)
+    msg = "\n".join([f"[align=left]{nickname}[/align][align=right]今日透群友 {times} 次[/align]" for nickname,times in record])
+    if msg:
+        msg_list.append({"type": "node",
+                         "data": {
+                             "name": "记录①",
+                             "uin": event.self_id,
+                             "content": MessageSegment.image(bbcode_to_png("涩涩记录①：\n——————————————\n" + msg))}})
 
     # 输出被透记录
 
-    record = []
-    for member in member_list:
-        nickname = member['card'] or member['nickname']
-        times = record_yinpa2.get(member['user_id'],0)
-        if times:
-            record.append([nickname,times])
-
+    record = [((member['card'] or member['nickname']),times) for member in member_list if (times := record_yinpa2.get(member['user_id']))]
     record.sort(key = lambda x:x[1],reverse = True)
 
     msg = "涩涩记录②：\n——————————————\n"
-    for info in record:
-        msg += f"[align=left]{info[0]}[/align][align=right]今日被透 {info[1]} 次[/align]\n"
-    else:
-        if msg:
-            output = bbcode_to_png(msg[:-1])
-            msg_list.append(
-                {
-                    "type": "node",
-                    "data": {
-                        "name": "记录②",
-                        "uin": event.self_id,
-                        "content": MessageSegment.image(output)
-                        }
-                    }
-                )
-        else:
-            pass
+    msg = "\n".join([f"[align=left]{nickname}[/align][align=right]今日被透 {times} 次[/align]"for nickname,times in record])
+    if msg:
+        msg_list.append({"type": "node",
+                         "data": {
+                             "name": "记录②",
+                             "uin": event.self_id,
+                             "content": MessageSegment.image("涩涩记录②：\n——————————————\n" + bbcode_to_png(msg))}})
+
     await bot.send_group_forward_msg(group_id = event.group_id, messages = msg_list)
     await yinpa_list.finish()

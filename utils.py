@@ -4,6 +4,7 @@ import hashlib
 import asyncio
 
 from pil_utils import BuildImage,Text2Image
+from nonebot.adapters.onebot.v11 import Message
 
 try:
     import ujson as json
@@ -38,10 +39,10 @@ async def user_img(user_id: int) -> bytes:
     '''
     获取用户头像url
     '''
-    url = f"http://q1.qlogo.cn/g?b=qq&nk={user_id}&s=640"
+    url = f"https://q1.qlogo.cn/g?b=qq&nk={user_id}&s=640"
     data = await download_url(url)
     if hashlib.md5(data).hexdigest() == "acef72340ac0e914090bd35799f5594e":
-        url = f"http://q1.qlogo.cn/g?b=qq&nk={user_id}&s=100"
+        url = f"https://q1.qlogo.cn/g?b=qq&nk={user_id}&s=100"
     return url
 
 def text_to_png(msg):
@@ -60,17 +61,12 @@ def bbcode_to_png(msg, spacing: int = 10):
     Text2Image.from_bbcode_text(msg, 50, spacing = spacing).to_image("white", (20,20)).save(output, format="png")
     return output
 
-def get_message_at(data: str) -> list:
+def get_message_at(message:Message) -> list:
     '''
     获取at列表
-    :param data: event.json()
     '''
     qq_list = []
-    data = json.loads(data)
-    try:
-        for msg in data['message']:
-            if msg['type'] == 'at':
-                qq_list.append(int(msg['data']['qq']))
-        return qq_list
-    except Exception:
-        return []
+    for msg in message:
+        if msg.type == "at":
+            qq_list.append(msg.data["qq"])
+    return qq_list
