@@ -9,5 +9,5 @@ class Config(BaseModel, extra=Extra.ignore):
     waifu_ntr :int = 50
     yinpa_he :int = 50
     yinpa_be :int = 0
-    yinpa_cp :int = 65
+    yinpa_cp :int = 80
     waifu_last_sent_time_filter :int = 2592000

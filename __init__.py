@@ -28,6 +28,16 @@ except ModuleNotFoundError:
 from .utils import *
 from .config import Config
 
+from nonebot.plugin import PluginMetadata
+
+__plugin_meta__ = PluginMetadata(
+    name = "娶群友",
+    description = "娶群友",
+    usage = "娶群友",
+    config = Config,
+    extra = {}
+    )
+
 # 加载全局配置
 global_config = nonebot.get_driver().config
 waifu_config = Config.parse_obj(global_config.dict())
@@ -305,14 +315,14 @@ async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
         member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_cp)
         msg = "人家已经名花有主了~" + MessageSegment.image(file = await user_img(waifu_cp)) + "ta的cp：" + (member['card'] or member['nickname'])
         if waifu_id in record_lock.get(group_id,{}).keys():
-            waifu_id = user_id
+            record_CP[group_id][user_id] = user_id
             await waifu.finish(msg + "\n本对cp已锁！",at_sender = True)
         elif random.randint(1,100) <= NTR: # 彩蛋
             rec.pop(waifu_cp)
             waifu_set.discard(waifu_cp)
             await waifu.send(msg + "\n但是...",at_sender = True)
         else:
-            waifu_id = user_id
+            record_CP[group_id][user_id] = user_id
             await waifu.finish(msg,at_sender = True)
         await asyncio.sleep(1)
     record_CP[group_id][user_id] = waifu_id
@@ -337,7 +347,7 @@ if waifu_cd_bye > -1:
         block = True
         )
     @bye.handle()
-    async def _(bot:Bot, event: GroupMessageEvent):
+    async def _(event: GroupMessageEvent):
         group_id = event.group_id
         user_id = event.user_id
         cd_bye.setdefault(group_id,{})
