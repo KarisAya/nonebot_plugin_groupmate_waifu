@@ -68,5 +68,5 @@ def get_message_at(message:Message) -> list:
     qq_list = []
     for msg in message:
         if msg.type == "at":
-            qq_list.append(msg.data["qq"])
+            qq_list.append(int(msg.data["qq"]))
     return qq_list
