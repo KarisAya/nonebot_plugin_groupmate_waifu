@@ -412,9 +412,9 @@ cp_list = on_command("本群CP", aliases = {"本群cp"}, priority = 90, block = 
 @cp_list.handle()
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
-    waifu_set = record_waifu.setdefault(group_id,set())
+    waifu_set = record_waifu.get(group_id)
     if not waifu_set:
-        msg = "本群暂无cp哦~"
+        await cp_list.finish("本群暂无cp哦~")
     rec = record_CP.get(group_id)
     msg = ""
     for waifu_id in waifu_set:
@@ -431,9 +431,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
             niknameB = ""
 
         msg += f"♥ {niknameA} | {niknameB}\n"
-    else:
-        msg = MessageSegment.image(text_to_png("本群CP：\n——————————————\n" + msg[:-1]))
-    await cp_list.finish(msg)
+    await cp_list.finish(MessageSegment.image(text_to_png("本群CP：\n——————————————\n" + msg[:-1])))
 
 
 # 透群友
