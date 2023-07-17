@@ -152,14 +152,14 @@ protect = on_command("娶群友保护", priority = 90, block = True)
 @protect.handle()
 async def _(bot:Bot, event: GroupMessageEvent, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER):
     group_id = event.group_id
-    protect_list.setdefault(group_id,set())
+    protect_set = protect_list.setdefault(group_id,set())
     at = get_message_at(event.message)
     if not at:
-        protect_list[group_id].add(event.user_id)
+        protect_set.add(event.user_id)
         save(protect_list_file,protect_list)
         await protect.finish("保护成功！", at_sender =True)
     elif await permission(bot,event):
-        protect_list[group_id].update(set(at))
+        protect_set.update(set(at))
         namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in at if (member := await bot.get_group_member_info(group_id,user_id))])
         save(protect_list_file,protect_list)
         await protect.finish(f"保护成功！\n保护名单为：\n{namelist}",at_sender =True)
@@ -173,22 +173,21 @@ unprotect = on_command("娶群友解除保护", priority = 90,block = True)
 @unprotect.handle()
 async def _(bot:Bot, event: GroupMessageEvent, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER):
     group_id = event.group_id
-    protect_list.setdefault(group_id,set())
+    protect_set = protect_list.setdefault(group_id,set())
     at = get_message_at(event.message)
     if not at:
         user_id = event.user_id
-        if user_id in protect_list[group_id]:
-            protect_list[group_id].discard(user_id)
+        if user_id in protect_set:
+            protect_set.discard(user_id)
             save(protect_list_file,protect_list)
             await unprotect.finish("解除保护成功！", at_sender =True)
         else:
             await unprotect.finish("你不在保护名单内。", at_sender =True)
     elif await permission(bot,event):
-        inner_protect = protect_list[group_id]
-        valid_at = inner_protect.intersection(set(at))
+        valid_at = protect_set & set(at)
         if not valid_at:
             await unprotect.finish("保护名单内不存在指定成员。",at_sender =True)
-        protect_list[group_id] -= valid_at
+        protect_set -= valid_at
         save(protect_list_file,protect_list)
         namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in valid_at if (member := await bot.get_group_member_info(group_id,user_id))])
         await unprotect.finish(f"解除保护成功！\n解除保护名单为：\n{namelist}",at_sender =True)
@@ -199,10 +198,10 @@ async def _(bot:Bot, event: GroupMessageEvent, permission = SUPERUSER | GROUP_AD
 show_protect = on_command("查看保护名单", priority = 90,block = True)
 async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
-    lst = protect_list.get(group_id)
-    if not lst:
+    protect_set = protect_list.get(group_id)
+    if not protect_set:
         await show_protect.finish("保护名单为空")
-    namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in lst if (member := await bot.get_group_member_info(group_id,user_id))])
+    namelist = '\n'.join([(member['card'] or member['nickname']) for user_id in protect_set if (member := await bot.get_group_member_info(group_id,user_id))])
     await show_protect.finish(MessageSegment.image(text_to_png(f"保护名单为：\n{namelist}")))
      
 # 娶群友
@@ -229,10 +228,18 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
     msg = event.message.extract_plain_text()
     if not msg.startswith("娶群友"):
         return False
+    group_id = event.group_id
     user_id = event.user_id
+    protect_set = protect_list.get(group_id,set())
+    if user_id in protect_set:
+        return False
     at = get_message_at(event.message)
+    at = at[0] if at else None
+    if at in protect_set:
+        return False
     tips = "你的群友結婚对象是、"
-    if waifu_id := record_CP.get(user_id):
+    rec = record_CP.setdefault(group_id,{})
+    if waifu_id := rec.get(user_id):
         try:
             member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_id)
         except:
@@ -242,7 +249,7 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
             if waifu_id in at:
                 msg = "这是你的CP！" + random.choice(happy_end) + MessageSegment.image(file = await user_img(waifu_id))
                 if user_id in record_waifu.get(group_id,set()):
-                    record_lock.setdefault(group_id)
+                    record_lock.setdefault(group_id,{})
                     record_lock[group_id][waifu_id] = user_id
                     record_lock[group_id][user_id] = waifu_id
                     save(record_lock_file,record_lock)
@@ -250,9 +257,10 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
             else:
                 msg = "你已经有CP了，不许花心哦~" + MessageSegment.image(file = await user_img(waifu_id)) + f"你的CP：{member['card'] or member['nickname']}"
         else:
-            msg = tips + MessageSegment.image(file = await user_img(record_CP[group_id][user_id])) + f"『{member['card'] or member['nickname']}』！"
+            msg = tips + MessageSegment.image(file = await user_img(waifu_id)) + f"『{member['card'] or member['nickname']}』！"
         await bot.send(event,msg,at_sender = True)
         return False
+
     if at:
         X = random.randint(1,100)
         if 0 < X <= HE:
@@ -265,10 +273,10 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
         member_list = await bot.get_group_member_list(group_id = group_id)
         lastmonth = event.time - last_sent_time_filter
         id_list = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth}
-        waifu_ids = id_list - set(record_CP[group_id].keys())
-        waifu_ids -= protect_list.get(group_id,set())
+        waifu_ids = id_list - set(rec.keys())
+        waifu_ids -= protect_set
         if waifu_ids:
-            waifu_id = random.choice[waifu_ids]
+            waifu_id = random.choice(list(waifu_ids))
         else:
             msg = "群友已经被娶光了、\n" + random.choice(no_waifu)
             await bot.send(event,msg,at_sender = True)
@@ -284,6 +292,8 @@ async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
     user_id = event.user_id
     waifu_id,tips = state["waifu"]
     if waifu_id == user_id:
+        record_CP[group_id][user_id] = user_id
+        save(record_CP_file,record_CP)
         await waifu.finish(random.choice(no_waifu),at_sender = True)
     rec = record_CP.setdefault(group_id,{})
     waifu_set = record_waifu.setdefault(group_id,set())
@@ -305,6 +315,7 @@ async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
     waifu_set.add(waifu_id)
     member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_id)
     msg = tips + MessageSegment.image(file = await user_img(waifu_id)) + f"『{(member['card'] or member['nickname'])}』！"
+    save(record_waifu_file,record_waifu)
     save(record_CP_file,record_CP)
     await waifu.finish(msg, at_sender=True)
 
@@ -329,7 +340,7 @@ if waifu_cd_bye > 0:
         Now = event.time
         cd = T - Now
         if Now > T:
-            cd_bye[group_id][user_id] = [Now + waifu_cd_bye, 0]
+            cd_bye[group_id][user_id] = [Now + waifu_cd_bye, 0,0]
             rec = record_CP[group_id]
             waifu_set = record_waifu.setdefault(group_id,set())
             waifu_id = rec[user_id]
@@ -337,6 +348,7 @@ if waifu_cd_bye > 0:
             del rec[waifu_id]
             waifu_set.discard(user_id)
             waifu_set.discard(waifu_id)
+            save(record_waifu_file,record_waifu)
             save(record_CP_file,record_CP)
             if random.randint(1,2) == 1:
                 await bye.finish(random.choice(("嗯。","...","好。")))
@@ -421,12 +433,20 @@ async def yinpa_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
     msg = event.message.extract_plain_text()
     if not msg.startswith("透群友"):
         return False
+    group_id = event.group_id
     user_id = event.user_id
+    protect_set = protect_list.get(group_id,set())
+    if user_id in protect_set:
+        return False
+    at = get_message_at(event.message)
+    at = at[0] if at else None
+    if at in protect_set:
+        return False
     yinpa_id = None
     at = get_message_at(event.message)
     tips = "你的涩涩对象是、"
+    protect_set = protect_list.get(group_id,set())
     if at:
-        at = at[0]
         if at == user_id:
             msg = f"恭喜你涩到了你自己！" + MessageSegment.image(file = await user_img(user_id))
             await bot.send(event,msg,at_sender = True)
@@ -444,14 +464,14 @@ async def yinpa_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
         elif yinpa_HE < X <= yinpa_BE:
             yinpa_id = user_id
     if not yinpa_id:
-        group_id = event.group_id
+
         member_list = await bot.get_group_member_list(group_id = group_id)
         lastmonth = event.time - last_sent_time_filter
-        yinpa_ids = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth} - protect_list.get(group_id,set())
+        yinpa_ids = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth} - protect_set
         if not yinpa_ids:
             return False
         else:
-            yinpa_id = random.choice[yinpa_ids]
+            yinpa_id = random.choice(list(yinpa_ids))
     state["yinpa"] = yinpa_id,tips
     return True
 
@@ -516,7 +536,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
                          "data": {
                              "name": "记录②",
                              "uin": event.self_id,
-                             "content": MessageSegment.image("涩涩记录②：\n——————————————\n" + bbcode_to_png(msg))}})
+                             "content": MessageSegment.image(bbcode_to_png("涩涩记录②：\n——————————————\n" + msg))}})
 
     await bot.send_group_forward_msg(group_id = event.group_id, messages = msg_list)
     await yinpa_list.finish()
