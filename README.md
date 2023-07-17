@@ -75,4 +75,4 @@ __指令__：`涩涩记录`
 
 如有建议，bug反馈，以及讨论新玩法，新机制（或者单纯没有明白怎么用）可以来加群哦~
 
-![群号](https://github.com/KarisAya/nonebot_plugin_game_collection/blob/master/%E9%99%84%E4%BB%B6/qrcode_1665028285876.jpg)
+![群号](https://raw.githubusercontent.com/KarisAya/nonebot_plugin_game_collection/master/%E9%99%84%E4%BB%B6/qrcode_1676538742221.jpg)
