@@ -258,7 +258,7 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
             member = None
             waifu_id = user_id
         if member:
-            if at:
+            if at and at != user_id:
                 if waifu_id == at:
                     msg = "这是你的CP！" + random.choice(happy_end) + MessageSegment.image(file = await user_img(waifu_id))
                     if user_id in record_waifu.get(group_id,set()):
@@ -275,12 +275,15 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
             return False
 
     if at:
-        X = random.randint(1,100)
-        if 0 < X <= HE:
+        if at == rec.get(at):
             waifu_id = at
-            tips = "恭喜你娶到了群友\n" + tips
-        elif HE < X <= BE:
-            waifu_id = user_id
+        else:
+            X = random.randint(1,100)
+            if 0 < X <= HE:
+                waifu_id = at
+                tips = "恭喜你娶到了群友!\n" + tips
+            elif HE < X <= BE:
+                waifu_id = user_id
     if not waifu_id:
         group_id = event.group_id
         member_list = await bot.get_group_member_list(group_id = group_id)
@@ -315,7 +318,8 @@ async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
         member = await bot.get_group_member_info(group_id = group_id, user_id = waifu_cp)
         msg = "人家已经名花有主了~" + MessageSegment.image(file = await user_img(waifu_cp)) + "ta的cp：" + (member['card'] or member['nickname'])
         if waifu_id in record_lock.get(group_id,{}).keys():
-            record_CP[group_id][user_id] = user_id
+            if random.randint(1,100) > NTR: 
+                record_CP[group_id][user_id] = user_id
             await waifu.finish(msg + "\n本对cp已锁！",at_sender = True)
         elif random.randint(1,100) <= NTR: # 彩蛋
             rec.pop(waifu_cp)
