@@ -6,11 +6,6 @@ import asyncio
 from pil_utils import BuildImage,Text2Image
 from nonebot.adapters.onebot.v11 import Message
 
-try:
-    import ujson as json
-except ModuleNotFoundError:
-    import json
-
 async def download_avatar(user_id: int) -> bytes:
     url = f"https://q1.qlogo.cn/g?b=qq&nk={user_id}&s=640"
     data = await download_url(url)

@@ -3,7 +3,6 @@ from nonebot.plugin.on import on_command,on_message
 from nonebot.permission import SUPERUSER
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import (
-    GROUP,
     GROUP_ADMIN,
     GROUP_OWNER,
     Bot,
@@ -19,11 +18,6 @@ import asyncio
 import time
 
 from pathlib import Path
-
-try:
-    import ujson as json
-except ModuleNotFoundError:
-    import json
 
 from .utils import *
 from .config import Config
@@ -129,16 +123,16 @@ if waifu_reset:
         record_yinpa2 = {}
 
     # 重置记录
-    @scheduler.scheduled_job("cron",hour = 0, misfire_grace_time = 120)
-    def _():
-        global record_CP,record_yinpa1,record_yinpa2
+    def reset_record():
+        global record_CP,record_waifu,record_lock,record_yinpa1,record_yinpa2
         record_CP = {}
+        record_waifu = {}
+        record_lock = {}
         record_yinpa1 = {}
         record_yinpa2 = {}
 else:
     # 重置记录
-    @scheduler.scheduled_job("cron",hour = 0, misfire_grace_time = 120)
-    def _():
+    def reset_record():
         global record_CP,record_yinpa1,record_yinpa2
         for group_id in record_CP:
             for user_id in record_CP[group_id]:
@@ -146,6 +140,9 @@ else:
                     record_CP[group_id][user_id] = 0
         record_yinpa1 = {}
         record_yinpa2 = {}
+
+on_command("重置记录", priority = 80, block = True).append_handler(reset_record)
+scheduler.add_job(reset_record,"cron",hour = 0, misfire_grace_time = 120)
 
 protect_list_file = waifu_file / "list_protect"
 if protect_list_file.exists():
@@ -275,13 +272,14 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
             return False
 
     if at:
+        tips = "恭喜你娶到了群友!\n" + tips
         if at == rec.get(at):
             waifu_id = at
+            del rec[waifu_id]
         else:
             X = random.randint(1,100)
             if 0 < X <= HE:
                 waifu_id = at
-                tips = "恭喜你娶到了群友!\n" + tips
             elif HE < X <= BE:
                 waifu_id = user_id
     if not waifu_id:
@@ -346,7 +344,7 @@ if waifu_cd_bye > -1:
     bye = on_command(
         "离婚",
         aliases = {"分手"},
-        rule = lambda event:event.group_id in record_CP and record_CP[event.group_id].get(event.user_id,event.user_id) != event.user_id,
+        rule = lambda event:isinstance(event,GroupMessageEvent) and event.group_id in record_CP and record_CP[event.group_id].get(event.user_id,event.user_id) != event.user_id,
         priority = 90,
         block = True
         )
