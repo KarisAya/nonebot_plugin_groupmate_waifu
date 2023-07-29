@@ -290,9 +290,8 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
         group_id = event.group_id
         member_list = await bot.get_group_member_list(group_id = group_id)
         lastmonth = event.time - last_sent_time_filter
-        id_list = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth}
-        waifu_ids = id_list - set(rec.keys())
-        waifu_ids -= protect_set
+        rule_out = protect_set | set(rec.keys())
+        waifu_ids = [user_id for member in member_list if (user_id := member['user_id']) not in rule_out and member["last_sent_time"] > lastmonth]
         if waifu_ids:
             waifu_id = random.choice(list(waifu_ids))
         else:
@@ -409,8 +408,8 @@ async def _(bot:Bot, event: GroupMessageEvent):
     group_id = event.group_id
     member_list = await bot.get_group_member_list(group_id = group_id)
     lastmonth = event.time - last_sent_time_filter
-    waifu_ids = protect_list.get(group_id,set()) | set(record_CP.get(group_id).keys())
-    member_list = [member for member in member_list if member['user_id'] not in waifu_ids and member["last_sent_time"] > lastmonth]
+    rule_out = protect_list.get(group_id,set()) | set(record_CP.get(group_id).keys())
+    member_list = [member for member in member_list if member['user_id'] not in rule_out and member["last_sent_time"] > lastmonth]
     member_list.sort(key = lambda x:x["last_sent_time"] ,reverse = True)
     if member_list:
         msg ="卡池：\n——————————————\n"
@@ -463,38 +462,37 @@ async def yinpa_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
     if user_id in protect_set:
         return False
     at = get_message_at(event.message)
-    at = at[0] if at else None
-    if at in protect_set:
-        return False
     yinpa_id = None
     tips = "你的涩涩对象是、"
-    protect_set = protect_list.get(group_id,set())
     if at:
+        at = at[0]
+        if at in protect_set:
+            return False
         if at == user_id:
             msg = f"恭喜你涩到了你自己！" + MessageSegment.image(file = await user_img(user_id))
             await bot.send(event,msg,at_sender = True)
             return False
-        elif at == record_CP[group_id].get(user_id,0):
-            if 0 < random.randint(1,100) <= yinpa_CP:
+        X = random.randint(1,100)
+        if at == record_CP.get(group_id,{}).get(user_id,0):
+            if 0 < X <= yinpa_CP:
+                yinpa_id = at
                 tips = "恭喜你涩到了你的老婆！"
             else:
                 await bot.send(event,"你的老婆拒绝和你涩涩！",at_sender = True)
                 return False
-        X = random.randint(1,100)
-        if 0 < X <= yinpa_HE:
+        elif 0 < X <= yinpa_HE:
             yinpa_id = at
-            tips = "恭喜你涩到了群友！" + tips
+            tips = "恭喜你涩到了群友！"
         elif yinpa_HE < X <= yinpa_BE:
             yinpa_id = user_id
     if not yinpa_id:
-
         member_list = await bot.get_group_member_list(group_id = group_id)
         lastmonth = event.time - last_sent_time_filter
-        yinpa_ids = {member['user_id'] for member in member_list if member["last_sent_time"] > lastmonth} - protect_set
-        if not yinpa_ids:
-            return False
+        yinpa_ids = [user_id for member in member_list if (user_id := member['user_id']) not in protect_set and member["last_sent_time"] > lastmonth]
+        if yinpa_ids:
+            yinpa_id = random.choice(yinpa_ids)
         else:
-            yinpa_id = random.choice(list(yinpa_ids))
+            return False
     state["yinpa"] = yinpa_id,tips
     return True
 
@@ -504,14 +502,17 @@ yinpa = on_message(rule = yinpa_rule, priority = 90, block = True)
 async def _(bot:Bot, event: GroupMessageEvent, state:T_State):
     group_id = event.group_id
     user_id = event.user_id
-    yinpa_id,tips = state["yinpa"]
-    member = await bot.get_group_member_info(group_id = group_id, user_id = yinpa_id)
-    msg = tips + MessageSegment.image(file = await user_img(yinpa_id)) + f"『{(member['card'] or member['nickname'])}』！"
-    record_yinpa1[user_id] = record_yinpa1.get(user_id,0) + 1
-    save(record_yinpa1_file,record_yinpa1)
-    record_yinpa2[user_id] = record_yinpa2.get(yinpa_id,0) + 1
-    save(record_yinpa2_file,record_yinpa2)
-    await yinpa.finish(msg, at_sender=True)
+    yinpa_id, tips = state["yinpa"]
+    if yinpa_id == user_id:
+        await yinpa.finish("不可以涩涩！", at_sender = True)
+    else:
+        record_yinpa1[user_id] = record_yinpa1.get(user_id,0) + 1
+        save(record_yinpa1_file,record_yinpa1)
+        record_yinpa2[user_id] = record_yinpa2.get(yinpa_id,0) + 1
+        save(record_yinpa2_file,record_yinpa2)
+        member = await bot.get_group_member_info(group_id = group_id, user_id = yinpa_id)
+        msg = tips + MessageSegment.image(file = await user_img(yinpa_id)) + f"『{(member['card'] or member['nickname'])}』！"
+        await yinpa.finish(msg, at_sender=True)
 
 # 查看涩涩记录
 
