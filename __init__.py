@@ -218,15 +218,35 @@ async def _(bot:Bot, event: GroupMessageEvent):
 no_waifu = [
     "你没有娶到群友，强者注定孤独，加油！",
     "找不到对象.jpg",
-    "恭喜你没有娶到老婆~",
-    "さんが群友で結婚するであろうヒロインは、\n『自分の左手』です！"
+    "雪花飘飘北风萧萧～天地一片苍茫。",
+    "要不等着分配一个对象？",
+    "恭喜伱没有娶到老婆~",
+    "さんが群友で結婚するであろうヒロインは、\n『自分の左手』です！",
+    "醒醒，伱没有老婆。",
+    "哈哈哈哈哈哈哈哈哈",
+    "智者不入爱河，建设美丽中国。",
+    "智者不入爱河，我们终成富婆",
+    "智者不入爱河，寡王一路硕博"
     ]
 
 happy_end= [
     "好耶~",
+    "婚礼？启动！",
     "需要咱主持婚礼吗qwq",
     "不许秀恩爱！",
     "(响起婚礼进行曲♪)",
+    "比翼从此添双翅，连理于今有合枝。\n琴瑟和鸣鸳鸯栖，同心结结永相系。",
+    "金玉良缘，天作之合，郎才女貌，喜结同心。",
+    "繁花簇锦迎新人，车水马龙贺新婚。",
+    "乾坤和乐，燕尔新婚。",
+    "愿天下有情人终成眷属。",
+    "花团锦绣色彩艳，嘉宾满堂话语喧。",
+    "火树银花不夜天，春归画栋双栖燕。",
+    "红妆带绾同心结，碧树花开并蒂莲。",
+    "一生一世两情相悦，三世尘缘四世同喜",
+    "玉楼光辉花并蒂，金屋春暖月初圆。",
+    "笙韵谱成同生梦，烛光笑对含羞人。",
+    "祝你们百年好合,白头到老。",
     "祝你们生八个。"
     ]
 
@@ -246,7 +266,7 @@ async def waifu_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
     at = at[0] if at else None
     if at in protect_set:
         return False
-    tips = "你的群友結婚对象是、"
+    tips = "伱的群友結婚对象是、"
     rec = record_CP.setdefault(group_id,{})
     if (waifu_id := rec.get(user_id)) and waifu_id != user_id:
         try:
@@ -376,7 +396,7 @@ if waifu_cd_bye > -1:
             save(record_waifu_file,record_waifu)
             save(record_CP_file,record_CP)
             if random.randint(1,2) == 1:
-                await bye.finish(random.choice(("嗯。","...","好。")))
+                await bye.finish(random.choice(("嗯。","...","好。","哦。","行。")))
             else:
                 await bye.finish(Message(f'[CQ:poke,qq={event.user_id}]'))
         else:
@@ -417,7 +437,7 @@ async def _(bot:Bot, event: GroupMessageEvent):
             msg += f"{member['card'] or member['nickname']}\n"
         await waifu_list.finish(MessageSegment.image(text_to_png(msg[:-1])))
     else:
-        await waifu_list.finish("群友已经被娶光了。")
+        await waifu_list.finish("群友已经被娶光了。下次早点来吧。")
 
 # 查看本群CP
 
@@ -463,7 +483,7 @@ async def yinpa_rule(bot:Bot, event:GroupMessageEvent, state:T_State)-> bool:
         return False
     at = get_message_at(event.message)
     yinpa_id = None
-    tips = "你的涩涩对象是、"
+    tips = "伱的涩涩对象是、"
     if at:
         at = at[0]
         if at in protect_set:
