@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-groupmate-waifu"
-version = "1.3.4"
+version = "1.4.0"
 description = ""
 authors = ["KarisAya <1048827424@qq.com>"]
 readme = "README.md"
