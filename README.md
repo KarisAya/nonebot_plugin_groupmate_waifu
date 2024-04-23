@@ -1,89 +1,103 @@
-<p align="center">
-  <a href="https://v2.nonebot.dev/"><img src="https://v2.nonebot.dev/logo.png" width="200" height="200" alt="nonebot"></a>
-</p>
 <div align="center">
 
-# nonebot_plugin_groupmate_waifu
+<a href="https://v2.nonebot.dev/store">
+  <img src="https://raw.githubusercontent.com/A-kirami/nonebot-plugin-template/resources/nbp_logo.png" width="180" height="180" alt="NoneBotPluginLogo">
+</a>
 
-娶群友
+<p>
+  <img src="https://raw.githubusercontent.com/A-kirami/nonebot-plugin-template/resources/NoneBotPlugin.svg" width="240" alt="NoneBotPluginText">
+</p>
+
+# nonebot-plugin-groupmate-waifu
+
+_✨ 改自 [nonebot_plugin_russian](https://github.com/HibiKier/nonebot_plugin_russian) 和 [nonebot_plugin_horserace](https://github.com/shinianj/nonebot_plugin_horserace) 的小游戏合集 ✨_
+
+<img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="python">
+<a href="./LICENSE">
+  <img src="https://img.shields.io/github/license/KarisAya/nonebot_plugin_groupmate_waifu.svg" alt="license">
+</a>
+<a href="https://pypi.python.org/pypi/nonebot_plugin_groupmate_waifu">
+  <img src="https://img.shields.io/pypi/v/nonebot_plugin_groupmate_waifu.svg" alt="pypi">
+</a>
+<a href="https://pypi.python.org/pypi/nonebot_plugin_groupmate_waifu">
+  <img src="https://img.shields.io/pypi/dm/nonebot_plugin_groupmate_waifu" alt="pypi download">
+</a>
 
 </div>
 
-## 需要安装
-[pil-utils](https://github.com/MeetWq/pil-utils) PIL工具插件，方便图片操作，支持文字转图片
+## 💿 安装
 
-[nonebot_plugin_apscheduler](https://github.com/nonebot/plugin-apscheduler) APScheduler 定时任务插件
-## 安装
-    pip install nonebot_plugin_groupmate_waifu
-## 使用
-    nonebot.load_plugin('nonebot_plugin_groupmate_waifu')
-## 配置
-    # nonebot_plugin_groupmate_waifu
-    waifu_cd_bye = 3600 # 分手冷却时间，默认1小时。
-    waifu_save = true   # 是否将cp记录保存为文件（避免重启bot丢失数据）。
-    waifu_reset = true  # 是否每日重置cp记录。
-	
-    waifu_he = 40       # 在指定娶群友时，成功的概率40%
-    waifu_be = 25       # 在指定娶群友时，失败的概率25%
+以下提到的方法 任选**其一** 即可
 
-    ## 成功就是娶到了，失败就是单身。如果这两个参数加起来小于100那么剩下的概率是会随机娶一个。
-    
-    waifu_ntr = 50      # 别人有cp时被指定娶到的概率，需要先指定成功。
-    
-    yinpa_he = 50       # 在指定透群友时，成功的概率50%
-    yinpa_be = 0        # 在指定透群友时，失败的概率0%
-    
-    ## 同上，如果这两个参数加起来不等于100那么剩下的概率是会随机涩一个。
-    
-    yinpa_cp = 80       # 当透群友指定的对象是你娶群友的老婆时用这个概率判定。
-    waifu_last_sent_time_filter = 2592000 # 过滤多久没发言的群友（单位：秒）。
+<details open>
+<summary>[推荐] 使用 nb-cli 安装</summary>
+在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
-## 功能介绍
+```bash
+nb plugin install nonebot_plugin_groupmate_waifu
+```
 
-__指令__：`娶群友`
+</details>
 
-纯爱 __双向奔赴版__，每天刷新一次，两个人会互相抽到对方。
+<details>
+<summary>使用包管理器安装</summary>
+在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
 
-__指令__：`娶群友@name`
+<details>
+<summary>pip</summary>
 
-有机会娶到at的人。。。
+```bash
+pip install nonebot_plugin_groupmate_waifu
+```
 
-__指令__：`分手` `离婚`
+</details>
+<details>
+<summary>pdm</summary>
 
-雪花飘飘北风萧萧，天地一片苍茫~
+```bash
+pdm add nonebot_plugin_groupmate_waifu
+```
 
-__指令__：`本群cp`
+</details>
+<details>
+<summary>poetry</summary>
 
-查看当前群内的cp
+```bash
+poetry add nonebot_plugin_groupmate_waifu
+```
 
-__指令__：`群友卡池`
+</details>
+<details>
+<summary>conda</summary>
 
-查看当前群可以娶到的群友列表
+```bash
+conda install nonebot_plugin_groupmate_waifu
+```
 
-__指令__：`透群友`
+</details>
 
-ntr ~~宫吧老哥狂喜版~~，每次抽到的结果都不一样。
+打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分的 `plugins` 项里追加写入
 
-__指令__：`涩涩记录`
+```toml
+[tool.nonebot]
+plugins = [
+    # ...
+    "nonebot_plugin_game_collection"
+]
+```
 
-查看当前群的群友今日透群友次数和被透的次数，记录是跨群的。~~也就是说群友在别的群挨透也会在记录里显示出来~~
+</details>
 
-~~群友背地里玩的挺花（bushi）~~
+## 使用文档
 
-__指令__：`娶群友保护` `娶群友保护@someone@someother`
+[clovers_groupmate_waifu](https://github.com/KarisAya/clovers_groupmate_waifu)
 
-将自己或at的人（可以at多人）加入保护名单。名单内的群友无法触发娶群友或透群友，也无法作为娶群友或透群友的目标。
+## 📞 联系
 
-__指令__：`解除娶群友保护` `解除娶群友保护@someone@someother`
+如有建议，bug 反馈等可以加群
 
-将自己或at的人（可以at多人）从保护名单删除
+机器人 bug 研究中心（闲聊群） 744751179
 
-__指令__：`查看保护名单`
+永恒之城（测试群） 724024810
 
-查看娶群友保护的保护名单
-    
-## 其他
-
-如有建议，bug反馈，以及讨论新玩法，新机制（或者单纯没有明白怎么用）可以来加群哦~
-
-![群号](https://raw.githubusercontent.com/KarisAya/nonebot_plugin_game_collection/master/%E9%99%84%E4%BB%B6/qrcode_1676538742221.jpg)
+![群号](https://github.com/KarisAya/clovers/blob/master/%E9%99%84%E4%BB%B6/qrcode_1676538742221.jpg)
