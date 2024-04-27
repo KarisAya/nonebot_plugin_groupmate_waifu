@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "nonebot-plugin-groupmate-waifu"
-version = "1.4.1"
+version = "1.4.2"
 description = ""
 authors = ["KarisAya <1048827424@qq.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
+clovers = "^0.1.7"
 nonebot-plugin-clovers = {extras = ["nonebot"], version = "^0.1.4"}
 clovers-groupmate-waifu = "^0.1.0.post3"
 
