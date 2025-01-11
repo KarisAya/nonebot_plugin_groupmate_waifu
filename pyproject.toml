@@ -1,15 +1,16 @@
 [tool.poetry]
 name = "nonebot-plugin-groupmate-waifu"
-version = "1.4.2"
+version = "1.5.0"
 description = ""
 authors = ["KarisAya <1048827424@qq.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-clovers = "^0.1.7"
-nonebot-plugin-clovers = {extras = ["nonebot"], version = "^0.1.4"}
-clovers-groupmate-waifu = "^0.1.0.post3"
+clovers = "^0.3.0"
+nonebot-plugin-clovers = {extras = ["onebot"], version = "^0.2.0"}
+clovers_apscheduler = "^0.2.0"
+clovers_groupmate_waifu = "^0.2.0"
 
 
 [build-system]
