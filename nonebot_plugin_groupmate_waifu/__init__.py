@@ -45,8 +45,9 @@ async def _(group_id: str, user_id: str, /, bot: Bot):
 leaf.plugins.append(apscheduler)
 leaf.plugins.append(waifu)
 
-get_driver().on_startup(leaf.startup)
-get_driver().on_shutdown(leaf.shutdown)
+driver = get_driver()
+driver.on_startup(leaf.startup)
+driver.on_shutdown(leaf.shutdown)
 
 main = on_message(priority=20, block=False)
 
