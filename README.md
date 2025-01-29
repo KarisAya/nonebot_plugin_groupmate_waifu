@@ -8,20 +8,18 @@
   <img src="https://raw.githubusercontent.com/A-kirami/nonebot-plugin-template/resources/NoneBotPlugin.svg" width="240" alt="NoneBotPluginText">
 </p>
 
-# nonebot-plugin-groupmate-waifu
+# NoneBot-Plugin-Groupmate-WAIFU
 
 娶群友
 
-<img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="python">
-<a href="./LICENSE">
-  <img src="https://img.shields.io/github/license/KarisAya/nonebot_plugin_groupmate_waifu.svg" alt="license">
-</a>
-<a href="https://pypi.python.org/pypi/nonebot_plugin_groupmate_waifu">
-  <img src="https://img.shields.io/pypi/v/nonebot_plugin_groupmate_waifu.svg" alt="pypi">
-</a>
-<a href="https://pypi.python.org/pypi/nonebot_plugin_groupmate_waifu">
-  <img src="https://img.shields.io/pypi/dm/nonebot_plugin_groupmate_waifu" alt="pypi download">
-</a>
+[![python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+[![license](https://img.shields.io/github/license/KarisAya/nonebot_plugin_groupmate_waifu.svg)](./LICENSE)
+[![pypi](https://img.shields.io/pypi/v/nonebot_plugin_groupmate_waifu.svg)](https://pypi.python.org/pypi/nonebot_plugin_groupmate_waifu)
+[![pypi download](https://img.shields.io/pypi/dm/nonebot_plugin_groupmate_waifu)](https://pypi.python.org/pypi/nonebot_plugin_groupmate_waifu)
+<br />
+
+[![机器人 bug 研究中心](https://img.shields.io/badge/QQ%E7%BE%A4-744751179-maroon?)](https://qm.qq.com/q/3vpD9Ypb0c)
 
 </div>
 

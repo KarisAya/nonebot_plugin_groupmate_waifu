@@ -1,18 +1,19 @@
-[tool.poetry]
+[project]
 name = "nonebot-plugin-groupmate-waifu"
-version = "1.5.1"
+version = "1.5.2"
 description = ""
-authors = ["KarisAya <1048827424@qq.com>"]
+authors = [{ name = "KarisAya", email = "1048827424@qq.com" }]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.12"
-clovers = "^0.3.0"
-nonebot-plugin-clovers = {extras = ["onebot"], version = "^0.2.0"}
-clovers_apscheduler = "^0.2.0"
-clovers_groupmate_waifu = "^0.2.0"
+requires-python = ">=3.12,<4.0.0"
+dependencies = [
+    "pydantic (>=2.10.6,<3.0.0)",
+    "clovers (>=0.3.4,<0.4.0)",
+    "nonebot-plugin-clovers[onebot] (>=0.2.3,<0.3.0)",
+    "clovers-apscheduler (>=0.2.0,<0.3.0)",
+    "clovers-groupmate-waifu (>=0.2.1,<0.3.0)",
+]
 
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
