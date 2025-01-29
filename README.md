@@ -23,7 +23,7 @@
 
 </div>
 
-## 💿 安装
+# 💿 安装
 
 以下提到的方法 任选**其一** 即可
 
@@ -86,11 +86,30 @@ plugins = [
 
 </details>
 
-## 使用文档
+# 配置
 
-[clovers_groupmate_waifu](https://github.com/KarisAya/clovers_groupmate_waifu)
+# 使用文档
 
-## 📞 联系
+具体配置方法请参考[clovers_groupmate_waifu](https://github.com/KarisAya/clovers_groupmate_waifu)
+
+```env
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_FONTNAME='simsun'
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_FALLBACK_FONTS=["Arial", "Tahoma", "Microsoft YaHei"]
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_WAIFU_PATH='./data/waifu/'
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_WAIFU_RESET=True
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_AT_LISTEN=True
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_WAIFU_HE=40
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_WAIFU_BE=20
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_WAIFU_NTR=50
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_HAPPY_END_TIPS=["好耶~", "婚礼？启动！"]
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_BAD_END_TIPS=["你没有娶到群友，强者注定孤独，加油！", "找不到对象.jpg"]
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_WAIFU_LAST_SENT_TIME_FILTER=2592000
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_YINPA_HE=50
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_YINPA_CP=80
+NONEBOT_PLUGIN_GROUPMATE_WAIFU_BG_IMAGE='./data/waifu/bg.png'
+```
+
+# 📞 联系
 
 如有建议，bug 反馈等可以加群
 
