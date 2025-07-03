@@ -2,8 +2,8 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-    nonebot_plugin_groupmate_waifu_fontname: str = "simsun"
-    nonebot_plugin_groupmate_waifu_fallback_fonts: list[str] = [
+    groupmate_waifu_fontname: str = "simsun"
+    groupmate_waifu_fallback_fonts: list[str] = [
         "Arial",
         "Tahoma",
         "Microsoft YaHei",
@@ -21,19 +21,19 @@ class Config(BaseModel):
         "Noto Color Emoji",
     ]
 
-    nonebot_plugin_groupmate_waifu_waifu_path: str = "./data/waifu/"
+    groupmate_waifu_waifu_path: str = "./data/waifu/"
     """文件记录存档路径"""
-    nonebot_plugin_groupmate_waifu_waifu_reset: bool = True
+    groupmate_waifu_waifu_reset: bool = True
     """是否每日重置cp记录"""
-    nonebot_plugin_groupmate_waifu_at_listen: bool = True
+    groupmate_waifu_at_listen: bool = True
     """是否监听 at 事件"""
-    nonebot_plugin_groupmate_waifu_waifu_he: int = 40
+    groupmate_waifu_waifu_he: int = 40
     """指定成功概率"""
-    nonebot_plugin_groupmate_waifu_waifu_be: int = 20
+    groupmate_waifu_waifu_be: int = 20
     """指定失败概率"""
-    nonebot_plugin_groupmate_waifu_waifu_ntr: int = 50
+    groupmate_waifu_waifu_ntr: int = 50
     """NTR概率"""
-    nonebot_plugin_groupmate_waifu_happy_end_tips: list[str] = [
+    groupmate_waifu_happy_end_tips: list[str] = [
         "好耶~",
         "婚礼？启动！",
         "需要咱主持婚礼吗qwq",
@@ -54,7 +54,7 @@ class Config(BaseModel):
         "祝你们生八个。",
     ]
     """成功提示列表"""
-    nonebot_plugin_groupmate_waifu_bad_end_tips: list[str] = [
+    groupmate_waifu_bad_end_tips: list[str] = [
         "你没有娶到群友，强者注定孤独，加油！",
         "找不到对象.jpg",
         "雪花飘飘北风萧萧～天地一片苍茫。",
@@ -67,11 +67,11 @@ class Config(BaseModel):
         "智者不入爱河，寡王一路硕博",
     ]
     """失败提示列表"""
-    nonebot_plugin_groupmate_waifu_waifu_last_sent_time_filter: int = 2592000
+    groupmate_waifu_waifu_last_sent_time_filter: int = 2592000
     """时间过滤"""
-    nonebot_plugin_groupmate_waifu_yinpa_he: int = 50
+    groupmate_waifu_yinpa_he: int = 50
     """指定涩涩成功率"""
-    nonebot_plugin_groupmate_waifu_yinpa_cp: int = 80
+    groupmate_waifu_yinpa_cp: int = 80
     """指定cp涩涩成功率"""
-    nonebot_plugin_groupmate_waifu_bg_image: str = "./data/waifu/bg.png"
+    groupmate_waifu_bg_image: str = "./data/waifu/bg.png"
     """背景图片"""
