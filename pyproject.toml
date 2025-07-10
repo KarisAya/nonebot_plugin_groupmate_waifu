@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-groupmate-waifu"
-version = "1.6.0"
+version = "1.6.1"
 description = ""
 authors = [{ name = "KarisAya", email = "karisaya@foxmail.com" }]
 readme = "README.md"

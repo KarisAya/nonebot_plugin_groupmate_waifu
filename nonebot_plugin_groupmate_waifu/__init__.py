@@ -16,4 +16,8 @@ __plugin_meta__ = PluginMetadata(
 IMPORT_NAME = "clovers_groupmate_waifu"
 PREFIX_LENGTH = len("groupmate_waifu_")
 CloversConfig.environ()[IMPORT_NAME] = {k[PREFIX_LENGTH:].lower(): v for k, v in get_plugin_config(Config).model_dump().items()}
-require("nonebot_plugin_clovers").client.load_plugin(IMPORT_NAME)
+require("nonebot_plugin_clovers")
+from nonebot_plugin_clovers import client
+
+client.load_plugin(IMPORT_NAME)
+client.load_plugin("clovers_apscheduler")
